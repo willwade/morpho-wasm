@@ -71,12 +71,12 @@
   <pre id="out"></pre>
 
   <script type="module">
-    import { morph, configureMorphRuntime, configureMorphHfst, lastHfstUpRaw, lastHfstDownRaw, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@willwade/core@latest/dist/index.js';
+    import { morph, configureMorphRuntime, configureMorphHfst, lastHfstUpRaw, lastHfstDownRaw, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/dist/index.js';
 
     configureMorphRuntime('hfst');
     // Adjust URLs to match your dev server setup
     // Use jsDelivr CDN for WASM (always latest)
-    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@willwade/core@latest/public/wasm/hfst.wasm' });
+    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/public/wasm/hfst.wasm' });
 
     const log = document.getElementById('log');
     const busy = document.getElementById('busy');
@@ -92,7 +92,7 @@
     async function applyPackForLang(lang) {
       try {
         busy.style.display = 'inline';
-        const res = await fetch('https://cdn.jsdelivr.net/npm/@willwade/packs@latest/index.json', { cache: 'no-cache' });
+        const res = await fetch('https://cdn.jsdelivr.net/npm/@morphgrid/packs@latest/index.json', { cache: 'no-cache' });
         if (!res.ok) throw new Error('index.json not found');
         const idx = await res.json();
         const entry = idx?.[lang];
@@ -101,7 +101,7 @@
           if (entry.sha256) params.set('sha256', entry.sha256);
           if (entry.generation) params.set('gen', entry.generation);
           if (entry.generationSha256) params.set('gensha256', entry.generationSha256);
-          const url = 'https://cdn.jsdelivr.net/npm/@willwade/packs@latest' + entry.analysis + (params.toString() ? `?${params}` : '');
+          const url = 'https://cdn.jsdelivr.net/npm/@morphgrid/packs@latest' + entry.analysis + (params.toString() ? `?${params}` : '');
           packInput.value = url;
           configureMorphHfst({ packUrl: url });
           await morph.load(lang);

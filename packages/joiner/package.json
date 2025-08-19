@@ -1,5 +1,5 @@
 {
-  "name": "@willwade/joiner",
+  "name": "@morphgrid/joiner",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",

@@ -43,9 +43,9 @@
   </div>
 
   <script type="module">
-    import { morph, configureMorphRuntime, configureMorphHfst, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@willwade/core@latest/dist/index.js';
+    import { morph, configureMorphRuntime, configureMorphHfst, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/dist/index.js';
     configureMorphRuntime('hfst');
-    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@willwade/core@latest/public/wasm/hfst.wasm' });
+    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/public/wasm/hfst.wasm' });
 
     const log = document.getElementById('log');
     function logLine(msg) { log.textContent += (msg + "\n"); }
