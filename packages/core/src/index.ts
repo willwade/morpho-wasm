@@ -18,7 +18,9 @@ export type LangCode =
   | "en-US"
   | "de-DE"
   | "it-IT"
-  | "fi-FI";
+  | "fi-FI"
+  | "cy-GB" // Welsh
+  | "eu-ES"; // Basque
 
 const snowballMap: Record<LangCode, string> = {
   "fr-FR": "french",
@@ -28,6 +30,8 @@ const snowballMap: Record<LangCode, string> = {
   "de-DE": "german",
   "it-IT": "italian",
   "fi-FI": "finnish",
+  "cy-GB": "welsh",
+  "eu-ES": "basque",
 };
 
 const stemmers: Partial<Record<LangCode, any>> = {};
@@ -168,8 +172,22 @@ const ruleRuntime: Morph = {
       }
       if (["ing", "s"].includes(nl) || pl === "un") {
         return { surfacePrev: p, surfaceNext: n, joiner: "", noSpace: true, reason: "EN affix/concat" };
-
       }
+    }
+
+    if (lang === "cy-GB") {
+      // Welsh: simple article and mutation hints (demonstrative only; not exhaustive)
+      if (pl === "yr" && startsWithVowel(n)) {
+        return { surfacePrev: "yr", surfaceNext: n, joiner: " ", noSpace: false, reason: "CY article before vowel" };
+      }
+      if (pl === "yn" && /^[A-Z]?[NnLlRrMmBbCcDdGgPpTtFf]/.test(n)) {
+        return { surfacePrev: p, surfaceNext: n, joiner: " ", noSpace: false, reason: "CY mutation context" };
+      }
+    }
+
+    if (lang === "eu-ES") {
+      // Basque: token concatenation is rare; keep spacing, simple defaults
+      return { surfacePrev: p, surfaceNext: n, joiner: " ", noSpace: false, reason: "EU default spacing" };
     }
 
     return { surfacePrev: prev, surfaceNext: next, joiner: " ", noSpace: false, reason: "default" };
