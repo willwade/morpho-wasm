@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: read
+      statuses: read
       id-token: write
     steps:
       - name: Checkout
@@ -41,7 +42,8 @@ jobs:
       - name: Version packages (if changesets exist)
         if: steps.detect.outputs.count != '0'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           npx changeset version
           npm install --package-lock-only
@@ -60,6 +62,7 @@ jobs:
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: npx changeset publish
 
