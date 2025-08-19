@@ -136,8 +136,8 @@ const ruleRuntime: Morph = {
 
     const startsWithVowel = (s: string) => /^[aeiouàáâäæéèêëîïìíôöòóœùúûüỳýÿ]/i.test(s);
 
-    // Small exception list for FR h aspiré
-    const frHAspire = new Set(["hérisson"]);
+    // Small exception list for FR h aspiré (expanded data below)
+    const frHAspire = FR_H_ASPIRE;
 
     if (lang === "fr-FR") {
       const canElide = /^(je|le|la|ce|se)$/.test(pl);
@@ -168,7 +168,13 @@ const ruleRuntime: Morph = {
       }
       if (["ing", "s"].includes(nl) || pl === "un") {
         return { surfacePrev: p, surfaceNext: n, joiner: "", noSpace: true, reason: "EN affix/concat" };
-type PackIndexEntry = { version: string; analysis: string; sha256?: string };
+type PackIndexEntry = {
+  version: string;
+  analysis: string;
+  sha256?: string;
+  generation?: string;
+  generationSha256?: string;
+};
 
 async function resolvePackForLang(lang: LangCode): Promise<PackIndexEntry | undefined> {
   try {
@@ -189,10 +195,34 @@ async function resolvePackForLang(lang: LangCode): Promise<PackIndexEntry | unde
   },
 };
 
+type PackIndexEntry = {
+  version: string;
+  analysis: string;
+  sha256?: string;
+  generation?: string;
+  generationSha256?: string;
+};
+
+async function resolvePackForLang(lang: LangCode): Promise<PackIndexEntry | undefined> {
+  try {
+    const res = await fetch('/packs/index.json', { cache: 'no-cache' });
+    if (!res.ok) return undefined;
+    const idx = await res.json();
+    const entry = idx?.[lang] as PackIndexEntry | undefined;
+    return entry;
+  } catch {
+    return undefined;
+  }
+}
+
 import { HFSTWorkerClient } from "./workerClient.js";
 import { fetchWithIntegrity } from "./cache.js";
 const hfstClient = new HFSTWorkerClient();
 let hfstWasmUrl = "./wasm/hfst.wasm";
+// Debug: expose last raw HFST outputs
+export let lastHfstUpRaw: string[] = [];
+export let lastHfstDownRaw: string[] = [];
+
 let hfstPackUrl: string | undefined = undefined;
 
 
@@ -201,14 +231,48 @@ export function configureMorphHfst(options: { wasmUrl?: string; packUrl?: string
   if (options.packUrl) hfstPackUrl = options.packUrl;
 }
 
+// Tag ordering policy for generate(); default is flexible
+export type TagOrderPolicy = 'strict' | 'flexible';
+let tagOrderPolicy: TagOrderPolicy = 'flexible';
+// Optional canonical order map; lower number = earlier
+const canonicalTagOrder: Record<string, number> = {
+  // Example categories: adjust/extend per language
+  // Gender before Number, then Case/Person/Tense etc.
+  'FEM': 10, 'MASC': 10, 'NEUT': 10,
+  'PL': 20, 'SG': 20,
+  'NOM': 30, 'ACC': 30, 'DAT': 30, 'GEN': 30,
+  '1': 40, '2': 40, '3': 40,
+  'PRS': 50, 'PST': 50, 'FUT': 50,
+};
+
+export function configureTagOrdering(policy: TagOrderPolicy) {
+  tagOrderPolicy = policy;
+}
+
+function orderTagsForGenerate(tags: string[]): string[] {
+  if (tagOrderPolicy === 'strict') return tags.slice(); // preserve input order
+  // flexible: sort using canonical order, then alpha fallback
+  return tags.slice().sort((a, b) => {
+    const ra = canonicalTagOrder[a] ?? 999;
+    const rb = canonicalTagOrder[b] ?? 999;
+    if (ra !== rb) return ra - rb;
+    return a.localeCompare(b);
+  });
+}
+
 const hfstRuntimeStub: Morph = {
   async load(lang) {
     // Init Worker (no-op in Node). urls are configurable.
     await hfstClient.init(hfstWasmUrl, hfstPackUrl);
     // Load pack from explicit configuration or manifest
-    const entry = hfstPackUrl ? { analysis: hfstPackUrl } : await resolvePackForLang(lang);
+    const entry = hfstPackUrl ? { analysis: hfstPackUrl } as PackIndexEntry : await resolvePackForLang(lang);
     if (entry?.analysis) {
-      const url = entry.sha256 ? `${entry.analysis}?sha256=${entry.sha256}` : entry.analysis;
+      const params = new URLSearchParams();
+      if (entry.sha256) params.set('sha256', entry.sha256);
+      if (entry.generation) params.set('gen', entry.generation);
+      if (entry.generationSha256) params.set('gensha256', entry.generationSha256);
+      const q = params.toString();
+      const url = q ? `${entry.analysis}?${q}` : entry.analysis;
       await hfstClient.loadPack(url);
     }
     // Also prep the stemmer fallback to mirror current behavior
@@ -217,24 +281,28 @@ const hfstRuntimeStub: Morph = {
   async analyse(surface, lang) {
     // Use HFST applyUp; map to Analyse[] with a simple heuristic
     const lines = await hfstClient.applyUp(surface);
+    lastHfstUpRaw = lines || [];
     if (!lines || lines.length === 0) {
       // fallback to rule runtime if no analyses
       return ruleRuntime.analyse(surface, lang);
     }
     const out: Analyse[] = lines.map((line: string) => {
-      const toks = (line || '').split(/\s+/).filter(Boolean);
-      const lemma = toks[0] || surface;
-      const tags = toks.slice(1);
+      const first = (line || '').trim().split(/\s+/)[0] || '';
+      const parts = first.split('+').filter(Boolean);
+      const lemma = parts.shift() || surface;
+      const tags = parts;
       return { lemma, surface, tags };
     });
     return out;
   },
   async generate(input, lang) {
     // Use HFST applyDown when available; fall back to rules if empty
-    const joined = [input.lemma, ...input.tags].join(' ');
-    const lines = await hfstClient.applyDown(joined);
+    const tags = orderTagsForGenerate(input.tags || []);
+    const joinedPlus = [input.lemma, ...tags].join('+');
+    const lines = await hfstClient.applyDown(joinedPlus);
+    lastHfstDownRaw = lines || [];
     if (!lines || lines.length === 0) {
-      return ruleRuntime.generate(input, lang);
+      return ruleRuntime.generate({ ...input, tags }, lang);
     }
     return lines;
   },
@@ -256,6 +324,10 @@ export const morph: Morph = {
   async generate(input, lang) { return activeRuntime.generate(input, lang); },
   async join(prev, next, lang) { return activeRuntime.join(prev, next, lang); },
 };
+
+
+// Expanded FR h-aspiré list (seed); in future, load from data or HFST features
+const FR_H_ASPIRE = new Set<string>(["haricot","héros","honte","hache","hérisson"]);
 
 export type Token = {
   surface: string;

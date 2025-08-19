@@ -19,15 +19,26 @@
     </label>
   </p>
   <p>
+  <p>
+    <label><input type="checkbox" id="showRaw"> Inspect raw HFST output</label>
+  </p>
+
     <label>Pack URL: <input id="packUrl" value="/packages/core/public/wasm/sample.hfstol" size="60"></label>
     <button id="loadPack">Load Pack</button>
   </p>
   <p>
     <label>Analyse Input: <input id="input" value="aime"></label>
     <button id="run">Analyse</button>
+    <span id="busy" style="margin-left:8px;display:none;">⏳ Working…</span>
   </p>
   <p>
     <label>Generate Lemma: <input id="genLemma" value="cheval"></label>
+    <label style="margin-left:12px;">Tag order:
+      <select id="tagPolicy">
+        <option value="flexible" selected>flexible</option>
+        <option value="strict">strict</option>
+      </select>
+    </label>
   <details>
     <summary>Examples</summary>
     <p>
@@ -40,6 +51,10 @@
           <optgroup label="en-US">
             <option value='{"lang":"en-US","analyse":"running","genLemma":"child","genTags":["PL"]}'>EN: analyse "running"; generate child + PL</option>
           </optgroup>
+  <p>
+    <button id="runJoin">Run TSV Join Example</button>
+  </p>
+
           <optgroup label="it-IT">
             <option value='{"lang":"it-IT","analyse":"amico","genLemma":"ragazza","genTags":["PL"]}'>IT: analyse "amico"; generate ragazza + PL</option>
           </optgroup>
@@ -56,13 +71,15 @@
   <pre id="out"></pre>
 
   <script type="module">
-    import { morph, configureMorphRuntime, configureMorphHfst } from '../../core/dist/index.js';
+    import { morph, configureMorphRuntime, configureMorphHfst, lastHfstUpRaw, lastHfstDownRaw, configureTagOrdering } from '../../core/dist/index.js';
 
     configureMorphRuntime('hfst');
     // Adjust URLs to match your dev server setup
     configureMorphHfst({ wasmUrl: '/packages/core/public/wasm/hfst.wasm' });
 
     const log = document.getElementById('log');
+    const busy = document.getElementById('busy');
+    const tagPolicySel = document.getElementById('tagPolicy');
     function logLine(msg) { log.textContent += (msg + "\n"); }
 
     logLine('Initializing HFST runtime...');
@@ -70,9 +87,42 @@
     await morph.load(langSel.value);
     logLine('HFST runtime ready.');
 
+    // Auto-populate Pack URL from packs/index.json when language changes
+    async function applyPackForLang(lang) {
+      try {
+        busy.style.display = 'inline';
+        const res = await fetch('/packs/index.json', { cache: 'no-cache' });
+        if (!res.ok) throw new Error('index.json not found');
+        const idx = await res.json();
+        const entry = idx?.[lang];
+        if (entry?.analysis) {
+          const params = new URLSearchParams();
+          if (entry.sha256) params.set('sha256', entry.sha256);
+          if (entry.generation) params.set('gen', entry.generation);
+          if (entry.generationSha256) params.set('gensha256', entry.generationSha256);
+          const url = entry.analysis + (params.toString() ? `?${params}` : '');
+          packInput.value = url;
+          configureMorphHfst({ packUrl: url });
+          await morph.load(lang);
+          logLine(`Pack for ${lang} loaded from manifest.`);
+        } else {
+          logLine(`No pack entry for ${lang} in packs/index.json`);
+        }
+      } catch (e) {
+        logLine('Auto-pack error: ' + (e?.message || e));
+      } finally {
+        busy.style.display = 'none';
+      }
+    }
+
+    langSel.addEventListener('change', async () => {
+      await applyPackForLang(langSel.value);
+    });
+
     const packInput = document.getElementById('packUrl');
     document.getElementById('loadPack').onclick = async () => {
       try {
+        busy.style.display = 'inline';
         logLine(`Loading pack: ${packInput.value}`);
         // Re-configure and load pack
         configureMorphHfst({ packUrl: packInput.value });
@@ -80,35 +130,99 @@
         logLine('Pack loaded (or using manifest).');
       } catch (e) {
         logLine('Load pack error: ' + (e?.message || e));
+      } finally {
+        busy.style.display = 'none';
       }
     };
 
     const input = document.getElementById('input');
     const out = document.getElementById('out');
-    document.getElementById('run').onclick = async () => {
+    const runBtn = document.getElementById('run');
+    runBtn.onclick = async () => {
       try {
+        busy.style.display = 'inline';
+        runBtn.disabled = true;
         logLine(`applyUp('${input.value}') ...`);
         const analyses = await morph.analyse(input.value, langSel.value);
-        out.textContent = JSON.stringify(analyses, null, 2);
+        const showRaw = document.getElementById('showRaw').checked;
+        out.textContent = showRaw ? JSON.stringify({ raw: lastHfstUpRaw, analyses }, null, 2)
+                                  : JSON.stringify(analyses, null, 2);
         logLine(`applyUp OK, ${analyses.length} result(s).`);
       } catch (e) {
         out.textContent = 'Error: ' + (e?.message || e);
         logLine('applyUp error: ' + (e?.message || e));
+      } finally {
+        runBtn.disabled = false;
+        busy.style.display = 'none';
       }
+    // TSV subset: parse and run first matching example for current lang
+    async function runTsvJoinForLang(lang) {
+      try {
+        busy.style.display = 'inline';
+        const res = await fetch('/tests/test.tsv', { cache: 'no-cache' });
+        const raw = await res.text();
+        const lines = raw.split(/\r?\n/);
+        let current = null;
+        for (const line of lines) {
+          const t = line.trim();
+          if (!t) continue;
+          if (t.startsWith('#')) {
+            if (/french/i.test(t)) current = 'fr-FR';
+            else if (/spanish/i.test(t)) current = 'es-ES';
+            else if (/english/i.test(t)) current = 'en-US';
+            else if (/german/i.test(t)) current = 'de-DE';
+            else if (/italian/i.test(t)) current = 'it-IT';
+            else if (/finnish/i.test(t)) current = 'fi-FI';
+            else current = null;
+            continue;
+          }
+          if (current !== lang) continue;
+          const parts = t.split(/\t+/);
+          if (parts.length < 3) continue;
+          const [prev, next, expected] = parts;
+          logLine(`TSV run: '${prev}' + '${next}' (expect '${expected}')`);
+          await morph.load(lang);
+          const dec = await morph.join(prev, next, lang);
+          const actual = dec.noSpace ? dec.surfacePrev + dec.surfaceNext : dec.surfacePrev + (dec.joiner || ' ') + dec.surfaceNext;
+          out.textContent = JSON.stringify({ prev, next, expected, actual, decision: dec }, null, 2);
+          if (actual === expected) logLine('TSV join PASS'); else logLine('TSV join FAIL');
+          break;
+        }
+      } catch (e) {
+        logLine('TSV error: ' + (e?.message || e));
+      } finally {
+        busy.style.display = 'none';
+      }
+    }
+
+    document.getElementById('runJoin').onclick = async () => {
+      await runTsvJoinForLang(langSel.value);
+    };
+
     };
 
     const genLemma = document.getElementById('genLemma');
     const genTags = document.getElementById('genTags');
-    document.getElementById('genBtn').onclick = async () => {
+    const genBtn = document.getElementById('genBtn');
+    genBtn.onclick = async () => {
       try {
+        busy.style.display = 'inline';
+        genBtn.disabled = true;
+        const policy = tagPolicySel.value;
+        configureTagOrdering(policy);
         const tags = genTags.value.trim() ? genTags.value.trim().split(/\s+/) : [];
-        logLine(`applyDown('${genLemma.value} ${tags.join(' ')}') ...`);
+        logLine(`applyDown('${genLemma.value} ${tags.join(' ')}') [policy=${policy}] ...`);
         const forms = await morph.generate({ lemma: genLemma.value, tags }, langSel.value);
-        out.textContent = JSON.stringify(forms, null, 2);
+        const showRaw = document.getElementById('showRaw').checked;
+        out.textContent = showRaw ? JSON.stringify({ raw: lastHfstDownRaw, forms }, null, 2)
+                                  : JSON.stringify(forms, null, 2);
         logLine(`applyDown OK, ${forms.length} result(s).`);
       } catch (e) {
         out.textContent = 'Error: ' + (e?.message || e);
         logLine('applyDown error: ' + (e?.message || e));
+      } finally {
+        genBtn.disabled = false;
+        busy.style.display = 'none';
       }
     };
 
@@ -116,12 +230,15 @@
     const examples = document.getElementById('examples');
     document.getElementById('applyExample').onclick = async () => {
       try {
+        busy.style.display = 'inline';
         const data = JSON.parse(examples.value);
         langSel.value = data.lang;
         input.value = data.analyse;
         genLemma.value = data.genLemma;
         genTags.value = (data.genTags || []).join(' ');
-        logLine(`Loading example for ${data.lang} and running analyse/generate...`);
+        const policy = tagPolicySel.value;
+        configureTagOrdering(policy);
+        logLine(`Loading example for ${data.lang} and running analyse/generate... [policy=${policy}]`);
         await morph.load(langSel.value);
         // Analyse
         const analyses = await morph.analyse(input.value, langSel.value);
@@ -132,6 +249,8 @@
         out.textContent = JSON.stringify({ analyses, forms }, null, 2);
       } catch (e) {
         logLine('Example error: ' + (e?.message || e));
+      } finally {
+        busy.style.display = 'none';
       }
     };
   </script>

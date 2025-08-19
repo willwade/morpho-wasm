@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Morphgrid Cohesive Text Demo</title>
+  <style>
+    body { font-family: sans-serif; }
+    .row { margin: 8px 0; }
+    input[type=text] { width: 400px; }
+    .out { background:#111;color:#0f0;padding:8px;min-height:3em;white-space:pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Morphgrid Cohesive Text Demo</h1>
+  <div class="row">
+    <label>Language:
+      <select id="lang">
+        <option value="fr-FR" selected>fr-FR</option>
+        <option value="en-US">en-US</option>
+        <option value="it-IT">it-IT</option>
+      </select>
+    </label>
+  </div>
+  <div class="row">
+    <label>Tokens (space-separated):
+      <input id="tokens" type="text" value="je aime , il arrive" />
+    </label>
+    <button id="render">Render Cohesive</button>
+  </div>
+  <div class="row">
+    <label>Tag order policy:
+      <select id="tagPolicy">
+        <option value="flexible" selected>flexible</option>
+        <option value="strict">strict</option>
+      </select>
+    </label>
+  </div>
+  <div class="row">
+    <pre id="log" class="out"></pre>
+  </div>
+  <div class="row">
+    <strong>Rendered:</strong> <span id="rendered"></span>
+  </div>
+
+  <script type="module">
+    import { morph, configureMorphRuntime, configureMorphHfst, configureTagOrdering } from '../../core/dist/index.js';
+    configureMorphRuntime('hfst');
+    configureMorphHfst({ wasmUrl: '/packages/core/public/wasm/hfst.wasm' });
+
+    const log = document.getElementById('log');
+    function logLine(msg) { log.textContent += (msg + "\n"); }
+
+    const langSel = document.getElementById('lang');
+    const tokensEl = document.getElementById('tokens');
+    const policySel = document.getElementById('tagPolicy');
+    const outSpan = document.getElementById('rendered');
+    await morph.load(langSel.value);
+
+    async function joinPair(prev, next, lang) {
+      // Use morph.join (rule-based) for now
+      return await morph.join(prev, next, lang);
+    }
+
+    function renderFromDecision(decision) {
+      return decision.noSpace
+        ? decision.surfacePrev + decision.surfaceNext
+        : decision.surfacePrev + (decision.joiner || ' ') + decision.surfaceNext;
+    }
+
+    async function renderCohesive() {
+      const lang = langSel.value;
+      configureTagOrdering(policySel.value);
+      const toks = tokensEl.value.trim().split(/\s+/).filter(Boolean);
+      outSpan.textContent = '';
+      log.textContent = '';
+      if (toks.length === 0) return;
+
+      let rendered = toks[0];
+      for (let i = 1; i < toks.length; i++) {
+        const dec = await joinPair(rendered, toks[i], lang);
+        rendered = renderFromDecision(dec);
+        logLine(JSON.stringify(dec));
+      }
+      outSpan.textContent = rendered;
+    }
+
+    document.getElementById('render').onclick = renderCohesive;
+    policySel.addEventListener('change', renderCohesive);
+    langSel.addEventListener('change', async () => { await morph.load(langSel.value); await renderCohesive(); });
+  </script>
+</body>
+</html>
+

@@ -17,6 +17,9 @@ export class HFSTWorkerClient {
   private worker: any | null = null;
   private pendingResolve: ((msg: WorkerResponse) => void) | null = null;
   private initialized = false;
+  // Simple in-memory queue to serialize requests to the Worker
+  private queue: Array<{ msg: WorkerRequest; resolve: (msg: WorkerResponse) => void } > = [];
+  private sending = false;
 
   async init(wasmUrl: string, packUrl?: string): Promise<void> {
     if (this.initialized) return;
@@ -28,6 +31,9 @@ export class HFSTWorkerClient {
     this.worker.onmessage = (ev: MessageEvent<WorkerResponse>) => {
       if (this.pendingResolve) {
         const resolve = this.pendingResolve; this.pendingResolve = null; resolve(ev.data);
+        // Mark not sending and process next queued item, if any
+        this.sending = false;
+        this.processQueue();
       }
     };
 
@@ -41,13 +47,23 @@ export class HFSTWorkerClient {
     }
   }
 
+  private processQueue() {
+    const W: any = (globalThis as any).Worker;
+    if (!this.worker || !W) return;
+    if (this.sending) return;
+    const next = this.queue.shift();
+    if (!next) return;
+    this.sending = true;
+    this.pendingResolve = next.resolve;
+    this.worker.postMessage(next.msg);
+  }
+
   private request(msg: WorkerRequest): Promise<WorkerResponse> {
     const W: any = (globalThis as any).Worker;
     if (!this.worker || !W) return Promise.resolve({ type: 'error', message: 'no-worker' });
-    if (this.pendingResolve) return Promise.reject(new Error('concurrent worker request'));
     return new Promise<WorkerResponse>((resolve) => {
-      this.pendingResolve = resolve;
-      this.worker.postMessage(msg);
+      this.queue.push({ msg, resolve });
+      this.processQueue();
     });
   }
 

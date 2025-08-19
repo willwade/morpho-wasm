@@ -16,13 +16,73 @@ async function initWasm(wasmUrl, packUrl) {
             return p;
         } });
     if (packUrl) {
-        const res = await fetch(packUrl);
-        if (res.ok) {
+        // Attempt to fetch alongside checksum if available from a sidecar '?sha256=...'
+        let url = packUrl;
+        let expectedSha = undefined;
+        try {
+            const u = new URL(packUrl, self.location.origin);
+            expectedSha = u.searchParams.get('sha256') || undefined;
+            url = u.toString();
+        }
+        catch { }
+        // Cache Storage: try cache first, then network; cache successful responses
+        let res = await self.caches?.open?.('morph-packs-v1').then(async (c) => {
+            const m = await c.match(url);
+            if (m)
+                return m;
+            const r = await fetch(url);
+            if (r && r.ok) {
+                await c.put(url, r.clone());
+                return r;
+            }
+            return r;
+        }).catch(() => fetch(url));
+        if (res && res.ok) {
             const buf = new Uint8Array(await res.arrayBuffer());
-            // Mount at /pack.hfstol
-            Module.FS.writeFile('/pack.hfstol', buf);
+            if (expectedSha) {
+                const digest = await crypto.subtle.digest('SHA-256', buf);
+                const hex = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+                if (hex !== expectedSha.toLowerCase()) {
+                    throw new Error(`Integrity mismatch: expected ${expectedSha}, got ${hex}`);
+                }
+            }
+            const lower = packUrl.toLowerCase();
+            // Support optional generator alongside analysis (suffix .gen.*)
+            let mountPath = lower.endsWith('.pmhfst') ? '/analysis.pmhfst' : '/analysis.hfstol';
+            Module.FS.writeFile(mountPath, buf);
             const load = Module.cwrap('loadTransducer', 'number', ['string']);
-            load('/pack.hfstol');
+            load(mountPath);
+            // If the URL hints a generator file (e.g., analysis.hfstol?gen=/packs/.../generate.hfstol)
+            const genParam = (() => { try {
+                const u = new URL(packUrl, self.location.origin);
+                return u.searchParams.get('gen');
+            }
+            catch {
+                return null;
+            } })();
+            const genSha = (() => { try {
+                const u = new URL(packUrl, self.location.origin);
+                return u.searchParams.get('gensha256');
+            }
+            catch {
+                return null;
+            } })();
+            if (genParam) {
+                const r2 = await fetch(genParam);
+                if (r2.ok) {
+                    const b2 = new Uint8Array(await r2.arrayBuffer());
+                    if (genSha) {
+                        const d2 = await crypto.subtle.digest('SHA-256', b2);
+                        const hex2 = [...new Uint8Array(d2)].map(b => b.toString(16).padStart(2, '0')).join('');
+                        if (hex2 !== genSha.toLowerCase())
+                            throw new Error('Generator integrity mismatch');
+                    }
+                    const genPath = genParam.toLowerCase().endsWith('.pmhfst') ? '/generate.pmhfst' : '/generate.hfstol';
+                    Module.FS.writeFile(genPath, b2);
+                    const loadGen = Module.cwrap('loadGenerator', 'number', ['string']);
+                    loadGen(genPath);
+                }
+            }
         }
     }
 }
@@ -42,12 +102,60 @@ self.onmessage = async (ev) => {
                     await initWasm(wasmUrlCache, msg.packUrl);
                 else if (msg.packUrl) {
                     try {
-                        const res = await fetch(msg.packUrl);
-                        if (res.ok) {
+                        const u = new URL(msg.packUrl, self.location.origin);
+                        const expectedSha = u.searchParams.get('sha256') || undefined;
+                        const genParam = u.searchParams.get('gen');
+                        const genSha = u.searchParams.get('gensha256');
+                        // Cache Storage for analysis URL
+                        let res = await self.caches?.open?.('morph-packs-v1').then(async (c) => {
+                            const urlStr = u.toString();
+                            const m = await c.match(urlStr);
+                            if (m)
+                                return m;
+                            const r = await fetch(urlStr);
+                            if (r && r.ok) {
+                                await c.put(urlStr, r.clone());
+                                return r;
+                            }
+                            return r;
+                        }).catch(() => fetch(u.toString()));
+                        if (res && res.ok) {
                             const buf = new Uint8Array(await res.arrayBuffer());
-                            Module.FS.writeFile('/pack.hfstol', buf);
-                            const load = Module.cwrap('loadTransducer', 'number', ['string']);
-                            load('/pack.hfstol');
+                            if (expectedSha) {
+                                const digest = await crypto.subtle.digest('SHA-256', buf);
+                                const hex = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+                                if (hex !== expectedSha.toLowerCase())
+                                    throw new Error(`Integrity mismatch`);
+                            }
+                            const lower = u.pathname.toLowerCase();
+                            const mountPath = lower.endsWith('.pmhfst') ? '/analysis.pmhfst' : '/analysis.hfstol';
+                            Module.FS.writeFile(mountPath, buf);
+                            Module.cwrap('loadTransducer', 'number', ['string'])(mountPath);
+                            if (genParam) {
+                                const r2 = await self.caches?.open?.('morph-packs-v1').then(async (c) => {
+                                    const m = await c.match(genParam);
+                                    if (m)
+                                        return m;
+                                    const r = await fetch(genParam);
+                                    if (r && r.ok) {
+                                        await c.put(genParam, r.clone());
+                                        return r;
+                                    }
+                                    return r;
+                                }).catch(() => fetch(genParam));
+                                if (r2 && r2.ok) {
+                                    const b2 = new Uint8Array(await r2.arrayBuffer());
+                                    if (genSha) {
+                                        const d2 = await crypto.subtle.digest('SHA-256', b2);
+                                        const hex2 = [...new Uint8Array(d2)].map(b => b.toString(16).padStart(2, '0')).join('');
+                                        if (hex2 !== genSha.toLowerCase())
+                                            throw new Error('Generator integrity mismatch');
+                                    }
+                                    const genPath = genParam.toLowerCase().endsWith('.pmhfst') ? '/generate.pmhfst' : '/generate.hfstol';
+                                    Module.FS.writeFile(genPath, b2);
+                                    Module.cwrap('loadGenerator', 'number', ['string'])(genPath);
+                                }
+                            }
                         }
                     }
                     catch { }
