@@ -5,8 +5,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run -w @morphgrid/core build && npm run -w @morphgrid/joiner build && npm run -w @morphgrid/packs build",
-    "test": "npm run -w @morphgrid/core test",
+    "build": "npm run -w @willwade/core build && npm run -w @willwade/joiner build && npm run -w @willwade/packs build",
+    "test": "npm run -w @willwade/core test",
     "lint": "eslint \"packages/**/src/**/*.{ts,tsx,js}\"",
     "lint:fix": "npm run lint -- --fix",
     "changeset": "changeset",

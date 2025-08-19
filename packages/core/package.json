@@ -1,9 +1,10 @@
 {
-  "name": "@morphgrid/core",
+  "name": "@willwade/core",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": { "access": "public" },
   "files": [
     "dist",
     "dist-worker",

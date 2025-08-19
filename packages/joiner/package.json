@@ -1,9 +1,10 @@
 {
-  "name": "@morphgrid/joiner",
+  "name": "@willwade/joiner",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsc"
   },
