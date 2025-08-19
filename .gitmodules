@@ -1,0 +1,3 @@
+[submodule "third_party/hfst-optimized-lookup"]
+	path = third_party/hfst-optimized-lookup
+	url = https://github.com/UAlbertaALTLab/hfst-optimized-lookup.git

@@ -1,0 +1,9 @@
+{
+  "name": "morphgrid-wasm",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "test": "npm test -w @morphgrid/core"
+  },
+  "license": "MIT"
+}

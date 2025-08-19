@@ -1,0 +1,19 @@
+{
+  "name": "@morphgrid/core",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "pretest": "npm run build",
+    "test": "node --test",
+    "build:worker": "tsc -p tsconfig.worker.json"
+  },
+  "dependencies": {
+    "snowball-stemmers": "^0.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

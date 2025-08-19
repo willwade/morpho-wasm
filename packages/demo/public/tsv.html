@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Morphgrid TSV Demo</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 980px; margin: 24px auto; padding: 0 12px; }
+    pre#log { background:#111; color:#0f0; padding:8px; min-height:3em; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 6px 8px; font-size: 14px; }
+    tr.pass { background: #eaffea; }
+    tr.fail { background: #ffecec; }
+    .controls { display:flex; gap:12px; flex-wrap: wrap; align-items: center; }
+    .controls label { display:flex; gap:6px; align-items:center; }
+  </style>
+</head>
+<body>
+  <h1>TSV Gold Tests (Browser Demo)</h1>
+
+  <div class="controls">
+    <label>Runtime:
+      <select id="runtime">
+        <option value="rules">rules</option>
+        <option value="hfst">hfst</option>
+      </select>
+    </label>
+    <label>WASM URL: <input id="wasmUrl" value="/packages/core/public/wasm/hfst.wasm" size="48"></label>
+    <label>Pack URL: <input id="packUrl" value="/packages/core/public/wasm/sample.hfstol" size="48"></label>
+    <button id="init">Init Runtime</button>
+    <button id="run">Fetch TSV & Run Subset</button>
+  </div>
+
+  <pre id="log"></pre>
+  <table id="results">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lang</th>
+        <th>Prev</th>
+        <th>Next</th>
+        <th>Expected</th>
+        <th>Actual</th>
+        <th>Status</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script type="module">
+    import { morph, configureMorphRuntime, configureMorphHfst } from '../../core/dist/index.js';
+
+    const log = document.getElementById('log');
+    function logLine(msg) { log.textContent += (msg + "\n"); }
+
+    const headerToLang = [
+      [/^#\s*french/i, 'fr-FR'],
+      [/^#\s*english/i, 'en-US'],
+      [/^#\s*italian/i, 'it-IT'],
+    ];
+
+    // Subset we know how to pass right now (same as gold.test.js)
+    const covered = new Map([
+      ['fr-FR', new Set([ 'je\taime', 'le\thomme', 'le\thérisson', 'ce\test', 'se\thydrate' ])],
+      ['en-US', new Set([ 'a\tapple', 'sing\ting', 'un\thappy', 'run\ts', 'child\tren' ])],
+      ['it-IT', new Set([ 'lo\tamico', 'una\tamica', 'bella\tmente' ])],
+    ]);
+
+    function renderJoin(dec) {
+      if (dec.noSpace) return `${dec.surfacePrev}${dec.surfaceNext}`;
+      return `${dec.surfacePrev}${dec.joiner || ' '}${dec.surfaceNext}`;
+    }
+
+    async function initRuntime() {
+      const sel = document.getElementById('runtime');
+      const wasmUrl = document.getElementById('wasmUrl').value;
+      const packUrl = document.getElementById('packUrl').value;
+
+      configureMorphRuntime(sel.value);
+      if (sel.value === 'hfst') {
+        configureMorphHfst({ wasmUrl, packUrl });
+      }
+      logLine(`Initializing runtime='${sel.value}' ...`);
+      await morph.load('fr-FR');
+      logLine('Runtime ready.');
+    }
+
+    async function runSubset() {
+      const tableBody = document.querySelector('#results tbody');
+      tableBody.innerHTML = '';
+
+      logLine('Fetching tests/test.tsv ...');
+      const res = await fetch('/tests/test.tsv');
+      const raw = await res.text();
+      logLine('Parsing TSV and running subset ...');
+
+      let currentLang = undefined;
+      const lines = raw.split(/\r?\n/);
+      let idxDisp = 0; let pass = 0; let fail = 0;
+
+      for (let i=0; i<lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        if (line.startsWith('#')) {
+          currentLang = undefined;
+          for (const [re, code] of headerToLang) if (re.test(line)) { currentLang = code; break; }
+          continue;
+        }
+        const cols = line.split(/\t+/);
+        if (cols.length < 3) continue;
+        if (!currentLang) continue;
+
+        const [prev, next, expected, reason] = cols;
+        const hasPlus = /\+/.test(prev) || /\+/.test(next);
+        const sig = `${prev}\t${next}`;
+        if (hasPlus) continue; // skip complex morphology in this demo
+        if (!covered.get(currentLang)?.has(sig)) continue; // demo subset only
+
+        idxDisp++;
+        try {
+          await morph.load(currentLang);
+          const dec = await morph.join(prev, next, currentLang);
+          const actual = renderJoin(dec);
+          const ok = actual === expected;
+          if (ok) pass++; else fail++;
+          appendRow(idxDisp, currentLang, prev, next, expected, actual, ok, reason);
+        } catch (e) {
+          fail++;
+          appendRow(idxDisp, currentLang, prev, next, expected, String(e?.message||e), false, reason);
+        }
+      }
+      logLine(`Done. pass=${pass} fail=${fail}`);
+    }
+
+    function appendRow(n, lang, prev, next, expected, actual, ok, reason) {
+      const tr = document.createElement('tr');
+      tr.className = ok ? 'pass' : 'fail';
+      tr.innerHTML = `<td>${n}</td><td>${lang}</td><td>${prev}</td><td>${next}</td><td>${expected}</td><td>${actual}</td><td>${ok?'pass':'fail'}</td><td>${reason||''}</td>`;
+      document.querySelector('#results tbody').appendChild(tr);
+    }
+
+    document.getElementById('init').onclick = initRuntime;
+    document.getElementById('run').onclick = runSubset;
+
+    // Auto-init rules runtime by default
+    await initRuntime();
+  </script>
+</body>
+</html>
+

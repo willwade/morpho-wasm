@@ -1,0 +1,30 @@
+{
+  "fr-FR": {
+    "version": "v1",
+    "analysis": "/packs/fr-FR/v1/analysis.hfstol",
+    "sha256": "76fa0a087fb36002087af26c9f874c5e9faef851f3939b728f657785b1e5fce9",
+    "generation": "/packs/fr-FR/v1/generate.hfstol",
+    "generationSha256": "3ccb461d99aa9970eb45a746478c1e1a3915dc78aacc6caeaf274a753751b405"
+  },
+  "en-US": {
+    "version": "v1",
+    "analysis": "/packs/en-US/v1/analysis.hfstol",
+    "sha256": "efbf81daeaec5e851183780c1310fe09a98bd0da7f5d8d6185f866e9ee4d415d",
+    "generation": "/packs/en-US/v1/generate.hfstol",
+    "generationSha256": "efbf81daeaec5e851183780c1310fe09a98bd0da7f5d8d6185f866e9ee4d415d"
+  },
+  "es-ES": {
+    "version": "v1",
+    "analysis": "/packs/es-ES/v1/analysis.hfstol",
+    "sha256": "a5900b4fbc9b16a0e9f8d5278bae4b9c360a6b71c08d0b0e6e12c0d8d9aaaa31",
+    "generation": "/packs/es-ES/v1/generate.hfstol",
+    "generationSha256": "f1924e16abec6939dc494c4ccb4e3798d13c654b949370ff9dffac4b8158835f"
+  },
+  "it-IT": {
+    "version": "v1",
+    "analysis": "/packs/it-IT/v1/analysis.hfstol",
+    "sha256": "4937a01a0bed0aa559fae6bdea19e63682ec1486fcfe9a50a9845253bb319c97",
+    "generation": "/packs/it-IT/v1/generate.hfstol",
+    "generationSha256": "8c11e5a1ab9f3379f87436f3f9eeaada8aac680d61e487240308d8583127db79"
+  }
+}
