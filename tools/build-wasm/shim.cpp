@@ -32,7 +32,8 @@ int loadGenerator(const char* path) {
 int applyUp(const char* input, char* out, int out_cap) {
   if (!g_transducer) return -2;
   try {
-    std::vector<std::vector<std::string>> results = g_transducer->lookup(input);
+    std::string in("^"); in += input; in += "$";
+    std::vector<std::vector<std::string>> results = g_transducer->lookup(in.c_str());
     std::ostringstream oss;
     for (size_t i = 0; i < results.size(); ++i) {
       for (size_t j = 0; j < results[i].size(); ++j) {
@@ -55,7 +56,8 @@ int applyUp(const char* input, char* out, int out_cap) {
 int applyDown(const char* input, char* out, int out_cap) {
   if (g_generator) {
     try {
-      std::vector<std::vector<std::string>> results = g_generator->lookup(input);
+      std::string in("^"); in += input; in += "$";
+      std::vector<std::vector<std::string>> results = g_generator->lookup(in.c_str());
       std::ostringstream oss;
       for (size_t i = 0; i < results.size(); ++i) {
         for (size_t j = 0; j < results[i].size(); ++j) {
