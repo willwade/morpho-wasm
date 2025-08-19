@@ -150,7 +150,7 @@ self.onmessage = async (ev: MessageEvent<WorkerRequest>) => {
           const getSize = Module.cwrap('applyUp', 'number', ['string','number','number']);
           const needed = getSize(msg.input, 0, 0);
           const outPtr = Module._malloc(needed + 1);
-          const wrote = fn(msg.input, outPtr, needed + 1);
+          fn(msg.input, outPtr, needed + 1);
           const s = Module.UTF8ToString(outPtr);
           Module._free(outPtr);
           return s ? s.split('\n') : [];
@@ -165,7 +165,7 @@ self.onmessage = async (ev: MessageEvent<WorkerRequest>) => {
           const getSize = Module.cwrap('applyDown', 'number', ['string','number','number']);
           const needed = getSize(msg.input, 0, 0);
           const outPtr = Module._malloc(needed + 1);
-          const wrote = fn(msg.input, outPtr, needed + 1);
+          fn(msg.input, outPtr, needed + 1);
           const s = Module.UTF8ToString(outPtr);
           Module._free(outPtr);
           return s ? s.split('\n') : [];

@@ -168,25 +168,6 @@ const ruleRuntime: Morph = {
       }
       if (["ing", "s"].includes(nl) || pl === "un") {
         return { surfacePrev: p, surfaceNext: n, joiner: "", noSpace: true, reason: "EN affix/concat" };
-type PackIndexEntry = {
-  version: string;
-  analysis: string;
-  sha256?: string;
-  generation?: string;
-  generationSha256?: string;
-};
-
-async function resolvePackForLang(lang: LangCode): Promise<PackIndexEntry | undefined> {
-  try {
-    const res = await fetch('/packs/index.json', { cache: 'no-cache' });
-    if (!res.ok) return undefined;
-    const idx = await res.json();
-    const entry = idx?.[lang] as PackIndexEntry | undefined;
-    return entry;
-  } catch {
-    return undefined;
-  }
-}
 
       }
     }
@@ -195,28 +176,8 @@ async function resolvePackForLang(lang: LangCode): Promise<PackIndexEntry | unde
   },
 };
 
-type PackIndexEntry = {
-  version: string;
-  analysis: string;
-  sha256?: string;
-  generation?: string;
-  generationSha256?: string;
-};
-
-async function resolvePackForLang(lang: LangCode): Promise<PackIndexEntry | undefined> {
-  try {
-    const res = await fetch('/packs/index.json', { cache: 'no-cache' });
-    if (!res.ok) return undefined;
-    const idx = await res.json();
-    const entry = idx?.[lang] as PackIndexEntry | undefined;
-    return entry;
-  } catch {
-    return undefined;
-  }
-}
 
 import { HFSTWorkerClient } from "./workerClient.js";
-import { fetchWithIntegrity } from "./cache.js";
 const hfstClient = new HFSTWorkerClient();
 let hfstWasmUrl = "./wasm/hfst.wasm";
 // Debug: expose last raw HFST outputs
@@ -265,15 +226,9 @@ const hfstRuntimeStub: Morph = {
     // Init Worker (no-op in Node). urls are configurable.
     await hfstClient.init(hfstWasmUrl, hfstPackUrl);
     // Load pack from explicit configuration or manifest
-    const entry = hfstPackUrl ? { analysis: hfstPackUrl } as PackIndexEntry : await resolvePackForLang(lang);
-    if (entry?.analysis) {
-      const params = new URLSearchParams();
-      if (entry.sha256) params.set('sha256', entry.sha256);
-      if (entry.generation) params.set('gen', entry.generation);
-      if (entry.generationSha256) params.set('gensha256', entry.generationSha256);
-      const q = params.toString();
-      const url = q ? `${entry.analysis}?${q}` : entry.analysis;
-      await hfstClient.loadPack(url);
+    // Load pack only if explicitly provided via configuration; CDN manifest is used by the demo
+    if (hfstPackUrl) {
+      await hfstClient.loadPack(hfstPackUrl);
     }
     // Also prep the stemmer fallback to mirror current behavior
     await ruleRuntime.load(lang);
