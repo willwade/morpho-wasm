@@ -12,6 +12,17 @@
 </head>
 <body>
   <h1>Morphgrid Cohesive Text Demo</h1>
+  <p style="max-width:70ch;">
+    This tool renders a sequence of tokens as cohesive text, applying language-specific joining rules
+    (e.g., elision and spacing). Try the examples below by pasting them into the “Tokens” field and selecting
+    the matching language:
+  </p>
+  <ul>
+    <li><strong>fr-FR</strong>: <code>je aime , il arrive</code> → j’aime, il arrive</li>
+    <li><strong>fr-FR</strong>: <code>le homme</code> → l’homme; <code>le hérisson</code> → le hérisson</li>
+    <li><strong>it-IT</strong>: <code>lo amico</code> → l’amico; <code>una amica</code> → un’amica</li>
+    <li><strong>en-US</strong>: <code>a apple</code> → an apple; <code>sing ing</code> → singing</li>
+  </ul>
   <div class="row">
     <label>Language:
       <select id="lang">
@@ -43,9 +54,9 @@
   </div>
 
   <script type="module">
-    import { morph, configureMorphRuntime, configureMorphHfst, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@1.0.2/dist/index.js';
+    import { morph, configureMorphRuntime, configureMorphHfst, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/dist/index.js';
     configureMorphRuntime('hfst');
-    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@1.0.2/public/wasm/hfst.wasm' });
+    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/public/wasm/hfst.wasm' });
 
     const log = document.getElementById('log');
     function logLine(msg) { log.textContent += (msg + "\n"); }
