@@ -175,10 +175,17 @@ const ruleRuntime: Morph = {
       }
     }
 
+    if (lang === "de-DE") {
+      // German: simple prefix concat demo (e.g., un + glücklich → unglücklich)
+      if (pl === "un") {
+        return { surfacePrev: p, surfaceNext: n, joiner: "", noSpace: true, reason: "DE prefix concat" };
+      }
+    }
+
     if (lang === "cy-GB") {
-      // Welsh: simple article and mutation hints (demonstrative only; not exhaustive)
-      if (pl === "yr" && startsWithVowel(n)) {
-        return { surfacePrev: "yr", surfaceNext: n, joiner: " ", noSpace: false, reason: "CY article before vowel" };
+      // Welsh: demonstrate article form adjustment and mutation context hints
+      if ((pl === "y" || pl === "yr") && startsWithVowel(n)) {
+        return { surfacePrev: "yr", surfaceNext: n, joiner: " ", noSpace: false, reason: "CY article before vowel (y→yr)" };
       }
       if (pl === "yn" && /^[A-Z]?[NnLlRrMmBbCcDdGgPpTtFf]/.test(n)) {
         return { surfacePrev: p, surfaceNext: n, joiner: " ", noSpace: false, reason: "CY mutation context" };
