@@ -1,6 +1,6 @@
 {
   "name": "@morphgrid/packs",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": false,
   "description": "Language packs (HFST analysis/generation) for morphgrid-wasm, published for CDN delivery.",
   "type": "module",
@@ -13,4 +13,3 @@
     "prepare": "node scripts/copy.js"
   }
 }
-
