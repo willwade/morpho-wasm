@@ -43,7 +43,7 @@
   </div>
 
   <script type="module">
-    import { morph, configureMorphRuntime, configureMorphHfst, configureTagOrdering } from '../../core/dist/index.js';
+    import { morph, configureMorphRuntime, configureMorphHfst, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@willwade/core@latest/dist/index.js';
     configureMorphRuntime('hfst');
     configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@willwade/core@latest/public/wasm/hfst.wasm' });
 

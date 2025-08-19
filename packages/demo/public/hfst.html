@@ -71,7 +71,7 @@
   <pre id="out"></pre>
 
   <script type="module">
-    import { morph, configureMorphRuntime, configureMorphHfst, lastHfstUpRaw, lastHfstDownRaw, configureTagOrdering } from '../../core/dist/index.js';
+    import { morph, configureMorphRuntime, configureMorphHfst, lastHfstUpRaw, lastHfstDownRaw, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@willwade/core@latest/dist/index.js';
 
     configureMorphRuntime('hfst');
     // Adjust URLs to match your dev server setup
@@ -160,7 +160,7 @@
     async function runTsvJoinForLang(lang) {
       try {
         busy.style.display = 'inline';
-        const res = await fetch('/tests/test.tsv', { cache: 'no-cache' });
+        const res = await fetch('./assets/test.tsv', { cache: 'no-cache' });
         const raw = await res.text();
         const lines = raw.split(/\r?\n/);
         let current = null;
