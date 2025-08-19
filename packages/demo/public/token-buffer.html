@@ -29,6 +29,39 @@
         <option value="fr-FR" selected>fr-FR</option>
         <option value="en-US">en-US</option>
         <option value="it-IT">it-IT</option>
+        <option value="es-ES">es-ES</option>
+        <option value="de-DE">de-DE</option>
+        <option value="fi-FI">fi-FI</option>
+      </select>
+    </label>
+  </div>
+  <div class="row">
+    <label>Use example:
+      <select id="example">
+        <optgroup label="fr-FR">
+          <option value="je aime , il arrive">je aime , il arrive → j’aime, il arrive</option>
+          <option value="le homme">le homme → l’homme</option>
+          <option value="le hérisson">le hérisson → le hérisson</option>
+        </optgroup>
+        <optgroup label="it-IT">
+          <option value="lo amico">lo amico → l’amico</option>
+          <option value="una amica">una amica → un’amica</option>
+        </optgroup>
+        <optgroup label="en-US">
+          <option value="a apple">a apple → an apple</option>
+          <option value="sing ing">sing ing → singing</option>
+        </optgroup>
+        <optgroup label="es-ES">
+          <option value="el agua">el agua (contraction often dialectal) → el agua</option>
+          <option value="quiero le+dar">quiero le+dar → quiero darle</option>
+        </optgroup>
+        <optgroup label="de-DE">
+          <option value="Haus Tür">Haus Tür → Haustür</option>
+        </optgroup>
+        <optgroup label="fi-FI">
+          <option value="talo ssa">talo ssa → talossa</option>
+          <option value="tietokone ohjelma">tietokone ohjelma → tietokoneohjelma</option>
+        </optgroup>
       </select>
     </label>
   </div>
@@ -59,6 +92,7 @@
     configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/public/wasm/hfst.wasm' });
 
     const log = document.getElementById('log');
+    const exampleSel = document.getElementById('example');
     function logLine(msg) { log.textContent += (msg + "\n"); }
 
     const langSel = document.getElementById('lang');
@@ -66,6 +100,19 @@
     const policySel = document.getElementById('tagPolicy');
     const outSpan = document.getElementById('rendered');
     await morph.load(langSel.value);
+
+    // When an example is chosen, set tokens and optionally switch language group
+    exampleSel.addEventListener('change', async () => {
+      const txt = exampleSel.value;
+      tokensEl.value = txt;
+      // If the example belongs to a specific language group, align the selection
+      const grp = exampleSel.selectedOptions[0]?.parentElement?.label;
+      if (grp && langSel.value !== grp) {
+        langSel.value = grp;
+        await morph.load(langSel.value);
+      }
+      await renderCohesive();
+    });
 
     async function joinPair(prev, next, lang) {
       // Use morph.join (rule-based) for now
