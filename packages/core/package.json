@@ -4,6 +4,11 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "dist-worker",
+    "public/wasm"
+  ],
   "scripts": {
     "build": "tsc",
     "pretest": "npm run build",

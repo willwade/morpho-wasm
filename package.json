@@ -5,8 +5,10 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run -w @morphgrid/core build && npm run -w @morphgrid/joiner build",
+    "build": "npm run -w @morphgrid/core build && npm run -w @morphgrid/joiner build && npm run -w @morphgrid/packs build",
     "test": "npm run -w @morphgrid/core test",
+    "lint": "eslint \"packages/**/src/**/*.{ts,tsx,js}\"",
+    "lint:fix": "npm run lint -- --fix",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish"

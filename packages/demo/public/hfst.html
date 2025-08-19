@@ -75,7 +75,8 @@
 
     configureMorphRuntime('hfst');
     // Adjust URLs to match your dev server setup
-    configureMorphHfst({ wasmUrl: '/packages/core/public/wasm/hfst.wasm' });
+    // Use jsDelivr CDN for WASM (pinned to the current version)
+    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@0.0.1/public/wasm/hfst.wasm' });
 
     const log = document.getElementById('log');
     const busy = document.getElementById('busy');
@@ -91,7 +92,7 @@
     async function applyPackForLang(lang) {
       try {
         busy.style.display = 'inline';
-        const res = await fetch('/packs/index.json', { cache: 'no-cache' });
+        const res = await fetch('https://cdn.jsdelivr.net/npm/@morphgrid/packs@0.0.1/index.json', { cache: 'no-cache' });
         if (!res.ok) throw new Error('index.json not found');
         const idx = await res.json();
         const entry = idx?.[lang];
@@ -100,13 +101,13 @@
           if (entry.sha256) params.set('sha256', entry.sha256);
           if (entry.generation) params.set('gen', entry.generation);
           if (entry.generationSha256) params.set('gensha256', entry.generationSha256);
-          const url = entry.analysis + (params.toString() ? `?${params}` : '');
+          const url = 'https://cdn.jsdelivr.net/npm/@morphgrid/packs@0.0.1' + entry.analysis + (params.toString() ? `?${params}` : '');
           packInput.value = url;
           configureMorphHfst({ packUrl: url });
           await morph.load(lang);
-          logLine(`Pack for ${lang} loaded from manifest.`);
+          logLine(`Pack for ${lang} loaded from CDN manifest.`);
         } else {
-          logLine(`No pack entry for ${lang} in packs/index.json`);
+          logLine(`No pack entry for ${lang} in CDN index.json`);
         }
       } catch (e) {
         logLine('Auto-pack error: ' + (e?.message || e));

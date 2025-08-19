@@ -45,7 +45,7 @@
   <script type="module">
     import { morph, configureMorphRuntime, configureMorphHfst, configureTagOrdering } from '../../core/dist/index.js';
     configureMorphRuntime('hfst');
-    configureMorphHfst({ wasmUrl: '/packages/core/public/wasm/hfst.wasm' });
+    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@0.0.1/public/wasm/hfst.wasm' });
 
     const log = document.getElementById('log');
     function logLine(msg) { log.textContent += (msg + "\n"); }
