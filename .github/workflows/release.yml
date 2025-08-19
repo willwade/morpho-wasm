@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: read
       id-token: write
     steps:
       - name: Checkout
@@ -39,6 +40,8 @@ jobs:
 
       - name: Version packages (if changesets exist)
         if: steps.detect.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npx changeset version
           npm install --package-lock-only
@@ -57,5 +60,6 @@ jobs:
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx changeset publish
 
