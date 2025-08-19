@@ -1,0 +1,13 @@
+{
+  "fr-FR": {
+    "version": "v1",
+    "analysis": "/packs/fr-FR/v1/analysis.hfstol"
+  },
+  "en-US": {
+    "version": "v1",
+    "analysis": "/packs/en-US/v1/analysis.hfstol",
+    "sha256": "efbf81daeaec5e851183780c1310fe09a98bd0da7f5d8d6185f866e9ee4d415d",
+    "generation": "/packs/en-US/v1/generate.hfstol",
+    "generationSha256": "efbf81daeaec5e851183780c1310fe09a98bd0da7f5d8d6185f866e9ee4d415d"
+  }
+}

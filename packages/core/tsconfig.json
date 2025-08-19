@@ -5,8 +5,9 @@
     "moduleResolution": "node",
     "declaration": true,
     "outDir": "dist",
-    "strict": true
+    "strict": true,
+    "lib": ["ES2020", "DOM"],
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "test"]
+  "exclude": ["dist", "test", "src/worker.ts"]
 }

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Morphgrid HFST Demo</title>
+</head>
+<body>
+  <h1>Morphgrid HFST Demo</h1>
+  <p>
+    <label>Language:
+      <select id="lang">
+        <option value="fr-FR" selected>fr-FR</option>
+        <option value="en-US">en-US</option>
+        <option value="es-ES">es-ES</option>
+        <option value="de-DE">de-DE</option>
+        <option value="it-IT">it-IT</option>
+        <option value="fi-FI">fi-FI</option>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>Pack URL: <input id="packUrl" value="/packages/core/public/wasm/sample.hfstol" size="60"></label>
+    <button id="loadPack">Load Pack</button>
+  </p>
+  <p>
+    <label>Analyse Input: <input id="input" value="aime"></label>
+    <button id="run">Analyse</button>
+  </p>
+  <p>
+    <label>Generate Lemma: <input id="genLemma" value="cheval"></label>
+  <details>
+    <summary>Examples</summary>
+    <p>
+      <label>Pick example:
+        <select id="examples">
+          <optgroup label="fr-FR">
+            <option value='{"lang":"fr-FR","analyse":"aime","genLemma":"cheval","genTags":["PL"]}'>FR: analyse "aime"; generate cheval + PL</option>
+            <option value='{"lang":"fr-FR","analyse":"hydrate","genLemma":"animal","genTags":["PL"]}'>FR: analyse "hydrate"; generate animal + PL</option>
+          </optgroup>
+          <optgroup label="en-US">
+            <option value='{"lang":"en-US","analyse":"running","genLemma":"child","genTags":["PL"]}'>EN: analyse "running"; generate child + PL</option>
+          </optgroup>
+          <optgroup label="it-IT">
+            <option value='{"lang":"it-IT","analyse":"amico","genLemma":"ragazza","genTags":["PL"]}'>IT: analyse "amico"; generate ragazza + PL</option>
+          </optgroup>
+        </select>
+        <button id="applyExample" type="button">Apply</button>
+      </label>
+    </p>
+  </details>
+
+    <label>Tags (space-separated): <input id="genTags" value="PL"></label>
+    <button id="genBtn">Generate</button>
+  </p>
+  <pre id="log" style="background:#111;color:#0f0;padding:8px;min-height:3em;"></pre>
+  <pre id="out"></pre>
+
+  <script type="module">
+    import { morph, configureMorphRuntime, configureMorphHfst } from '../../core/dist/index.js';
+
+    configureMorphRuntime('hfst');
+    // Adjust URLs to match your dev server setup
+    configureMorphHfst({ wasmUrl: '/packages/core/public/wasm/hfst.wasm' });
+
+    const log = document.getElementById('log');
+    function logLine(msg) { log.textContent += (msg + "\n"); }
+
+    logLine('Initializing HFST runtime...');
+    const langSel = document.getElementById('lang');
+    await morph.load(langSel.value);
+    logLine('HFST runtime ready.');
+
+    const packInput = document.getElementById('packUrl');
+    document.getElementById('loadPack').onclick = async () => {
+      try {
+        logLine(`Loading pack: ${packInput.value}`);
+        // Re-configure and load pack
+        configureMorphHfst({ packUrl: packInput.value });
+        await morph.load(langSel.value);
+        logLine('Pack loaded (or using manifest).');
+      } catch (e) {
+        logLine('Load pack error: ' + (e?.message || e));
+      }
+    };
+
+    const input = document.getElementById('input');
+    const out = document.getElementById('out');
+    document.getElementById('run').onclick = async () => {
+      try {
+        logLine(`applyUp('${input.value}') ...`);
+        const analyses = await morph.analyse(input.value, langSel.value);
+        out.textContent = JSON.stringify(analyses, null, 2);
+        logLine(`applyUp OK, ${analyses.length} result(s).`);
+      } catch (e) {
+        out.textContent = 'Error: ' + (e?.message || e);
+        logLine('applyUp error: ' + (e?.message || e));
+      }
+    };
+
+    const genLemma = document.getElementById('genLemma');
+    const genTags = document.getElementById('genTags');
+    document.getElementById('genBtn').onclick = async () => {
+      try {
+        const tags = genTags.value.trim() ? genTags.value.trim().split(/\s+/) : [];
+        logLine(`applyDown('${genLemma.value} ${tags.join(' ')}') ...`);
+        const forms = await morph.generate({ lemma: genLemma.value, tags }, langSel.value);
+        out.textContent = JSON.stringify(forms, null, 2);
+        logLine(`applyDown OK, ${forms.length} result(s).`);
+      } catch (e) {
+        out.textContent = 'Error: ' + (e?.message || e);
+        logLine('applyDown error: ' + (e?.message || e));
+      }
+    };
+
+    // Example chooser: fills fields and auto-loads runtime
+    const examples = document.getElementById('examples');
+    document.getElementById('applyExample').onclick = async () => {
+      try {
+        const data = JSON.parse(examples.value);
+        langSel.value = data.lang;
+        input.value = data.analyse;
+        genLemma.value = data.genLemma;
+        genTags.value = (data.genTags || []).join(' ');
+        logLine(`Loading example for ${data.lang} and running analyse/generate...`);
+        await morph.load(langSel.value);
+        // Analyse
+        const analyses = await morph.analyse(input.value, langSel.value);
+        logLine(`Analyse OK: ${analyses.length} result(s).`);
+        // Generate
+        const forms = await morph.generate({ lemma: genLemma.value, tags: data.genTags || [] }, langSel.value);
+        logLine(`Generate OK: ${forms.length} result(s).`);
+        out.textContent = JSON.stringify({ analyses, forms }, null, 2);
+      } catch (e) {
+        logLine('Example error: ' + (e?.message || e));
+      }
+    };
+  </script>
+</body>
+</html>
+
