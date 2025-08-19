@@ -71,11 +71,11 @@
   <pre id="out"></pre>
 
   <script type="module">
-    import { morph, configureMorphRuntime, configureMorphHfst, lastHfstUpRaw, lastHfstDownRaw, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/dist/index.js';
+    import { morph, configureMorphRuntime, configureMorphHfst, lastHfstUpRaw, lastHfstDownRaw, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@1.0.2/dist/index.js';
 
     configureMorphRuntime('hfst');
-    // Use jsDelivr CDN for WASM (always latest)
-    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/public/wasm/hfst.wasm' });
+    // Pin to 1.0.2 to ensure worker cross-origin shim is present
+    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@1.0.2/public/wasm/hfst.wasm' });
 
     const log = document.getElementById('log');
     const busy = document.getElementById('busy');
