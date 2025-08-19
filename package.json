@@ -1,9 +1,18 @@
 {
   "name": "morphgrid-wasm",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "test": "npm test -w @morphgrid/core"
+    "build": "npm run -w @morphgrid/core build && npm run -w @morphgrid/joiner build",
+    "test": "npm run -w @morphgrid/core test",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1"
   },
   "license": "MIT"
 }
