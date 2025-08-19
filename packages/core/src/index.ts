@@ -128,76 +128,9 @@ const ruleRuntime: Morph = {
     return [input.lemma];
   },
   async join(prev, next, lang) {
-    const punct = [".", ",", "!", "?", ";", ":"];
-    if (punct.includes(next)) {
-      return { surfacePrev: prev, surfaceNext: next, joiner: "", noSpace: true, reason: "punctuation" };
-    }
-
-    const p = prev.toString();
-    const n = next.toString();
-    const pl = p.toLowerCase();
-    const nl = n.toLowerCase();
-
-    const startsWithVowel = (s: string) => /^[aeiouàáâäæéèêëîïìíôöòóœùúûüỳýÿ]/i.test(s);
-
-    // Small exception list for FR h aspiré (expanded data below)
-    const frHAspire = FR_H_ASPIRE;
-
-    if (lang === "fr-FR") {
-      const canElide = /^(je|le|la|ce|se)$/.test(pl);
-      const nextIsVowelish = startsWithVowel(n) || (nl.startsWith("h") && !frHAspire.has(nl));
-      if (canElide && nextIsVowelish) {
-        const baseMap: Record<string, string> = { je: "j’", le: "l’", la: "l’", ce: "c’", se: "s’" };
-        const base = baseMap[pl] || p;
-        return { surfacePrev: base, surfaceNext: n, joiner: "", noSpace: true, reason: "FR elision" };
-      }
-    }
-
-    if (lang === "it-IT") {
-      if ((pl === "lo" && startsWithVowel(n)) || (pl === "una" && startsWithVowel(n))) {
-        const base = pl === "lo" ? "l’" : "un’";
-        return { surfacePrev: base, surfaceNext: n, joiner: "", noSpace: true, reason: "IT elision" };
-      }
-      if (nl === "mente") {
-        return { surfacePrev: p, surfaceNext: n, joiner: "", noSpace: true, reason: "IT derivation -mente" };
-      }
-    }
-
-    if (lang === "en-US") {
-      if (pl === "a" && startsWithVowel(n)) {
-        return { surfacePrev: "an", surfaceNext: n, joiner: " ", noSpace: false, reason: "EN article alternation" };
-      }
-      if (pl === "child" && nl === "ren") {
-        return { surfacePrev: "children", surfaceNext: "", joiner: "", noSpace: true, reason: "EN irregular plural" };
-      }
-      if (["ing", "s"].includes(nl) || pl === "un") {
-        return { surfacePrev: p, surfaceNext: n, joiner: "", noSpace: true, reason: "EN affix/concat" };
-      }
-    }
-
-    if (lang === "de-DE") {
-      // German: simple prefix concat demo (e.g., un + glücklich → unglücklich)
-      if (pl === "un") {
-        return { surfacePrev: p, surfaceNext: n, joiner: "", noSpace: true, reason: "DE prefix concat" };
-      }
-    }
-
-    if (lang === "cy-GB") {
-      // Welsh: demonstrate article form adjustment and mutation context hints
-      if ((pl === "y" || pl === "yr") && startsWithVowel(n)) {
-        return { surfacePrev: "yr", surfaceNext: n, joiner: " ", noSpace: false, reason: "CY article before vowel (y→yr)" };
-      }
-      if (pl === "yn" && /^[A-Z]?[NnLlRrMmBbCcDdGgPpTtFf]/.test(n)) {
-        return { surfacePrev: p, surfaceNext: n, joiner: " ", noSpace: false, reason: "CY mutation context" };
-      }
-    }
-
-    if (lang === "eu-ES") {
-      // Basque: token concatenation is rare; keep spacing, simple defaults
-      return { surfacePrev: p, surfaceNext: n, joiner: " ", noSpace: false, reason: "EU default spacing" };
-    }
-
-    return { surfacePrev: prev, surfaceNext: next, joiner: " ", noSpace: false, reason: "default" };
+    // Delegate join decisions to @morphgrid/joiner
+    const { decideJoin } = await import('@morphgrid/joiner');
+    return decideJoin(prev, next, lang);
   },
 };
 
@@ -306,8 +239,6 @@ export const morph: Morph = {
 };
 
 
-// Expanded FR h-aspiré list (seed); in future, load from data or HFST features
-const FR_H_ASPIRE = new Set<string>(["haricot","héros","honte","hache","hérisson"]);
 
 export type Token = {
   surface: string;
