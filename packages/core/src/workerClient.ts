@@ -26,8 +26,17 @@ export class HFSTWorkerClient {
     const W: any = (globalThis as any).Worker;
     if (!W) { this.initialized = true; return; }
 
-    const workerUrl = new URL('../dist-worker/worker.js', import.meta.url);
-    this.worker = new W(workerUrl, { type: 'module' });
+    const rawUrl = new URL('../dist-worker/worker.js', import.meta.url);
+    let workerScriptUrl: string | URL = rawUrl;
+    try {
+      const loc: any = (globalThis as any).location;
+      if (loc && rawUrl.origin !== loc.origin) {
+        // Cross-origin workers are blocked; create a same-origin module worker shim that imports the CDN worker
+        const blob = new Blob([`import '${rawUrl.href}';`], { type: 'application/javascript' });
+        workerScriptUrl = URL.createObjectURL(blob);
+      }
+    } catch {}
+    this.worker = new W(workerScriptUrl, { type: 'module' });
     this.worker.onmessage = (ev: MessageEvent<WorkerResponse>) => {
       if (this.pendingResolve) {
         const resolve = this.pendingResolve; this.pendingResolve = null; resolve(ev.data);
