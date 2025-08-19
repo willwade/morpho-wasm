@@ -64,5 +64,17 @@ Serve the repo root with any static server and open the URLs above (e.g. http://
 - WASM artifacts in packages/core/public/wasm
 - PRs: add unit tests for joins (TSV) and language‑specific rules
 
+
+## Release & versioning (Changesets)
+We use Changesets for multi‑package versioning and publishing.
+- Create a changeset locally: npm run changeset (pick packages and bump types; write notes)
+- On push to main, GitHub Actions opens/updates a “Version Packages” PR
+- Merge that PR to tag versions and publish to npm (requires NPM_TOKEN secret)
+- Manual: npm run version-packages to apply bumps; npm run release to publish
+
+CI workflows:
+- .github/workflows/CI (build/test)
+- .github/workflows/release.yml (Changesets PR / publish)
+
 ## License
 MIT
