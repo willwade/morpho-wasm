@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English Morphology Demo - Morphgrid</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .demo-section {
+      padding: 2rem;
+    }
+
+    .input-group {
+      margin-bottom: 2rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      transition: border-color 0.3s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .control-group {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 2px solid #e9ecef;
+    }
+
+    .control-group h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: #495057;
+      text-align: center;
+    }
+
+    .toggle-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: 2px solid #dee2e6;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .toggle-btn:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+    }
+
+    .toggle-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .result {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .result-word {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 1rem;
+    }
+
+    .result-analysis {
+      font-size: 1rem;
+      color: #6c757d;
+      font-family: 'Courier New', monospace;
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+
+    .loading {
+      color: #6c757d;
+      font-style: italic;
+    }
+
+    .error {
+      color: #dc3545;
+      background: #f8d7da;
+      border-color: #f5c6cb;
+    }
+
+    .examples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .example-btn {
+      padding: 1rem;
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+
+    .example-btn:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+    }
+
+    @media (max-width: 768px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .result-word {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔤 English Morphology</h1>
+      <p>Real-time morphological transformations using HFST models</p>
+    </div>
+
+    <div class="demo-section">
+      <div class="input-group">
+        <label for="word-input">Enter an English word:</label>
+        <input type="text" id="word-input" placeholder="e.g., actor, run, cat" value="actor">
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <h3>Number</h3>
+          <div class="toggle-buttons">
+            <button class="toggle-btn active" data-feature="number" data-value="singular">Singular</button>
+            <button class="toggle-btn" data-feature="number" data-value="plural">Plural</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3>Tense</h3>
+          <div class="toggle-buttons">
+            <button class="toggle-btn active" data-feature="tense" data-value="present">Present</button>
+            <button class="toggle-btn" data-feature="tense" data-value="past">Past</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3>Form</h3>
+          <div class="toggle-buttons">
+            <button class="toggle-btn active" data-feature="form" data-value="base">Base</button>
+            <button class="toggle-btn" data-feature="form" data-value="progressive">-ing</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="result" id="result">
+        <div class="result-word loading">Enter a word to see morphological transformations</div>
+      </div>
+
+      <div class="examples">
+        <button class="example-btn" onclick="setExample('actor')">actor</button>
+        <button class="example-btn" onclick="setExample('run')">run</button>
+        <button class="example-btn" onclick="setExample('cat')">cat</button>
+        <button class="example-btn" onclick="setExample('walk')">walk</button>
+        <button class="example-btn" onclick="setExample('dog')">dog</button>
+        <button class="example-btn" onclick="setExample('sing')">sing</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Use CDN for all modules to resolve dependencies properly
+    import { morph, configureMorphRuntime, configureMorphHfst } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/dist/index.js';
+
+    configureMorphRuntime('hfst');
+    configureMorphHfst({
+      wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/public/wasm/hfst.wasm'
+    });
+
+    let currentState = {
+      word: 'actor',
+      number: 'singular',
+      tense: 'present', 
+      form: 'base'
+    };
+
+    let isLoaded = false;
+
+    // Load English models
+    async function loadEnglish() {
+      try {
+        const res = await fetch('https://cdn.jsdelivr.net/npm/@morphgrid/packs@latest/index.json');
+        const idx = await res.json();
+        const entry = idx?.['en-US'];
+        
+        if (entry?.generation) {
+          const packUrl = 'https://cdn.jsdelivr.net/npm/@morphgrid/packs@latest' + entry.generation;
+          configureMorphHfst({ packUrl });
+          await morph.load('en-US');
+          isLoaded = true;
+          console.log('✅ English HFST models loaded successfully');
+        }
+      } catch (error) {
+        console.error('❌ Failed to load English models:', error);
+      }
+    }
+
+    // Generate morphological form
+    async function generateForm() {
+      if (!isLoaded) {
+        showResult('Loading English models...', '', true);
+        return;
+      }
+
+      const { word, number, tense, form } = currentState;
+      
+      try {
+        showResult('Generating...', '', true);
+        
+        // Build tags based on current state
+        const tags = [];
+        
+        // Determine if it's a noun or verb based on common patterns
+        const isVerb = ['run', 'walk', 'sing', 'jump', 'play', 'work'].includes(word.toLowerCase()) ||
+                      tense !== 'present' || form === 'progressive';
+        
+        if (isVerb) {
+          tags.push('V');
+          if (tense === 'past') tags.push('PAST');
+          if (form === 'progressive') tags.push('PROG');
+          if (tense === 'present' && form === 'base') tags.push('PRES');
+        } else {
+          tags.push('N');
+          if (number === 'plural') tags.push('PL');
+        }
+
+        console.log(`🔨 Generating: lemma="${word}" + tags=[${tags.join(', ')}]`);
+        
+        const forms = await morph.generate({ lemma: word, tags }, 'en-US');
+        
+        if (forms && forms.length > 0 && !forms[0].includes('HFST_GENERATION_FAILED')) {
+          const result = forms[0];
+          const analysis = `lemma: "${word}", tags: [${tags.join(', ')}] → "${result}"`;
+          showResult(result, analysis, false);
+        } else {
+          // Try analysis instead
+          const analyses = await morph.analyse(word, 'en-US');
+          if (analyses && analyses.length > 0 && !analyses[0].lemma.includes('HFST_TRANSDUCER_NOT_LOADED')) {
+            const analysis = analyses[0];
+            const analysisText = `lemma: "${analysis.lemma}", tags: [${analysis.tags.join(', ')}]`;
+            showResult(word, `Analysis: ${analysisText}`, false);
+          } else {
+            showResult(word, 'No morphological data available for this word', false, true);
+          }
+        }
+        
+      } catch (error) {
+        console.error('Generation error:', error);
+        showResult('Error', error.message, false, true);
+      }
+    }
+
+    // Show result
+    function showResult(word, analysis, loading = false, error = false) {
+      const resultDiv = document.getElementById('result');
+      const wordDiv = resultDiv.querySelector('.result-word');
+      let analysisDiv = resultDiv.querySelector('.result-analysis');
+      
+      if (!analysisDiv) {
+        analysisDiv = document.createElement('div');
+        analysisDiv.className = 'result-analysis';
+        resultDiv.appendChild(analysisDiv);
+      }
+      
+      wordDiv.textContent = word;
+      wordDiv.className = `result-word ${loading ? 'loading' : ''}`;
+      
+      if (error) {
+        resultDiv.className = 'result error';
+      } else {
+        resultDiv.className = 'result';
+      }
+      
+      analysisDiv.textContent = analysis;
+      analysisDiv.style.display = analysis ? 'block' : 'none';
+    }
+
+    // Handle toggle buttons
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('toggle-btn')) {
+        const feature = e.target.dataset.feature;
+        const value = e.target.dataset.value;
+        
+        // Update active state
+        const group = e.target.parentElement;
+        group.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        // Update current state
+        currentState[feature] = value;
+        
+        // Regenerate
+        generateForm();
+      }
+    });
+
+    // Handle input changes
+    document.getElementById('word-input').addEventListener('input', (e) => {
+      currentState.word = e.target.value.trim();
+      if (currentState.word) {
+        generateForm();
+      }
+    });
+
+    // Set example word
+    window.setExample = (word) => {
+      document.getElementById('word-input').value = word;
+      currentState.word = word;
+      generateForm();
+    };
+
+    // Initialize
+    loadEnglish().then(() => {
+      generateForm();
+    });
+  </script>
+</body>
+</html>
