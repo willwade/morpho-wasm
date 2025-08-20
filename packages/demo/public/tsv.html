@@ -23,8 +23,8 @@
         <option value="hfst">HFST (Morphological Transducers)</option>
       </select>
     </label>
-    <label>WASM URL: <input id="wasmUrl" value="../../core/public/wasm/hfst.wasm" size="48"></label>
-    <label>Pack URL: <input id="packUrl" value="../../core/public/wasm/sample.hfstol" size="48"></label>
+    <label>WASM URL: <input id="wasmUrl" value="https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/public/wasm/hfst.wasm" size="60"></label>
+    <label>Pack URL: <input id="packUrl" value="https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/public/wasm/sample.hfstol" size="60"></label>
     <button id="init">Init Runtime</button>
     <button id="run">Fetch TSV & Run Subset</button>
   </div>
@@ -47,7 +47,7 @@
   </table>
 
   <script type="module">
-    import { morph, configureMorphRuntime, configureMorphHfst } from '../../core/dist/index.js';
+    import { morph, configureMorphRuntime, configureMorphHfst } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/dist/index.js';
 
     const log = document.getElementById('log');
     function logLine(msg) { log.textContent += (msg + "\n"); }
@@ -89,7 +89,7 @@
       tableBody.innerHTML = '';
 
       logLine('Fetching tests/test.tsv ...');
-      const res = await fetch('../../tests/test.tsv');
+      const res = await fetch('https://raw.githubusercontent.com/willwade/morpho-wasm/main/tests/test.tsv');
       const raw = await res.text();
       logLine('Parsing TSV and running subset ...');
 
