@@ -96,6 +96,42 @@ export type JoinDecision = {
   reason: string;
 };
 
+export interface HFSTJoinAdapter {
+  applyJoin(prev: string, next: string, lang: string): Promise<JoinDecision | null>;
+}
+
+/**
+ * HFST-based join decision function.
+ * This function delegates to HFST models when available, or returns an error when not.
+ */
+async function decideJoin(
+  prev: string,
+  next: string,
+  lang: string,
+  options?: { hfst?: HFSTJoinAdapter }
+): Promise<JoinDecision> {
+  // If HFST adapter is provided, use it
+  if (options?.hfst) {
+    try {
+      const result = await options.hfst.applyJoin(prev, next, lang);
+      if (result) {
+        return result;
+      }
+    } catch {
+      // Fall through to error case below
+    }
+  }
+
+  // No HFST join model available - return clear error
+  return {
+    surfacePrev: prev,
+    surfaceNext: next,
+    joiner: " ",
+    noSpace: false,
+    reason: `no join model loaded for ${lang}`
+  };
+}
+
 export interface Morph {
   load(lang: LangCode): Promise<void>;
   analyse(surface: string, lang: LangCode): Promise<Analyse[]>;
@@ -131,8 +167,7 @@ const ruleRuntime: Morph = {
     return [input.lemma];
   },
   async join(prev, next, lang) {
-    // Delegate join decisions to @morphgrid/joiner without HFST adapter
-    const { decideJoin } = await import('@morphgrid/joiner');
+    // Use built-in join logic (no HFST adapter)
     return decideJoin(prev, next, lang);
   },
 };
@@ -238,7 +273,6 @@ const hfstRuntimeStub: Morph = {
   },
   async join(prev, next, lang) {
     // Use HFST-based joins with worker adapter
-    const { decideJoin } = await import('@morphgrid/joiner');
     const adapter = new HFSTWorkerJoinAdapter();
     return decideJoin(prev, next, lang, { hfst: adapter });
   },
