@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Writing Assistant - Morphgrid Demo</title>
+  <style>
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .hero {
+      text-align: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+    .hero h1 { margin: 0; font-size: 2.5em; }
+    .hero p { margin: 10px 0 0 0; opacity: 0.9; font-size: 1.2em; }
+    
+    .demo-section {
+      background: #f8f9fa;
+      padding: 25px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid #667eea;
+    }
+    
+    .language-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .language-tab {
+      padding: 10px 20px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+    .language-tab.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    .language-tab:hover {
+      border-color: #667eea;
+    }
+    
+    .input-group {
+      margin: 15px 0;
+    }
+    .input-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    .text-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    .text-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .magic-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+      width: 100%;
+      margin: 15px 0;
+    }
+    .magic-button:hover {
+      transform: translateY(-2px);
+    }
+    
+    .result {
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px 0;
+      min-height: 60px;
+    }
+    .result.success {
+      border-color: #28a745;
+      background: #f8fff9;
+    }
+    .result-text {
+      font-size: 18px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .result-explanation {
+      color: #666;
+      font-size: 14px;
+      font-style: italic;
+    }
+    
+    .examples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .example-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .example-card:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+    .example-before {
+      font-family: monospace;
+      color: #666;
+      margin-bottom: 5px;
+    }
+    .example-after {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .feature {
+      text-align: center;
+      padding: 20px;
+    }
+    .feature-icon {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    .feature h3 {
+      margin: 10px 0;
+      color: #333;
+    }
+    .feature p {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .status {
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 10px;
+    }
+    .status.loading {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .tech-details {
+      margin-top: 15px;
+      padding: 10px;
+      background: #f1f3f4;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #666;
+      display: none;
+    }
+    .show-tech {
+      font-size: 12px;
+      color: #667eea;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>🪄 Smart Writing Assistant</h1>
+    <p>Type separate words, get perfect text in any language</p>
+  </div>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">🇫🇷</div>
+      <h3>French Elision</h3>
+      <p>Automatically joins "je aime" → "j'aime"</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🇪🇸</div>
+      <h3>Spanish Contractions</h3>
+      <p>Combines "de el" → "del"</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🇩🇪</div>
+      <h3>German Compounds</h3>
+      <p>Merges "Haus Tür" → "Haustür"</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🤖</div>
+      <h3>AI-Powered</h3>
+      <p>Uses advanced linguistic analysis</p>
+    </div>
+  </div>
+
+  <div class="demo-section">
+    <h2>✨ Try It Yourself</h2>
+    
+    <div class="language-tabs">
+      <div class="language-tab active" data-lang="fr-FR">🇫🇷 French</div>
+      <div class="language-tab" data-lang="es-ES">🇪🇸 Spanish</div>
+      <div class="language-tab" data-lang="de-DE">🇩🇪 German</div>
+      <div class="language-tab" data-lang="en-US">🇺🇸 English</div>
+      <div class="language-tab" data-lang="it-IT">🇮🇹 Italian</div>
+    </div>
+
+    <div class="input-group">
+      <label for="user-input">Type words separated by spaces:</label>
+      <input type="text" id="user-input" class="text-input" placeholder="je aime" value="je aime">
+    </div>
+
+    <button class="magic-button" id="transform-btn">
+      ✨ Transform Text
+    </button>
+
+    <div class="result" id="result">
+      <div class="result-text">Your transformed text will appear here...</div>
+      <div class="result-explanation"></div>
+      <div class="status loading" id="status" style="display: none;">Processing...</div>
+      <div class="show-tech" onclick="toggleTechDetails()">Show technical details</div>
+      <div class="tech-details" id="tech-details"></div>
+    </div>
+  </div>
+
+  <div class="demo-section">
+    <h2>📚 Quick Examples</h2>
+    <p>Click any example to try it:</p>
+    
+    <div class="examples" id="examples">
+      <!-- Examples will be populated by JavaScript -->
+    </div>
+  </div>
+
+  <script type="module">
+    // Use local build instead of CDN to avoid module resolution issues
+    import { morph, configureMorphRuntime, configureMorphHfst } from '/packages/core/dist/index.js';
+    
+    configureMorphRuntime('hfst');
+    configureMorphHfst({
+      wasmUrl: '/packages/core/public/wasm/hfst.wasm',
+      packUrl: '/packages/core/public/wasm/sample.hfstol'
+    });
+
+    let currentLang = 'fr-FR';
+    
+    const examples = {
+      'fr-FR': [
+        { input: 'je aime', output: "j'aime", desc: 'Pronoun elision' },
+        { input: 'le homme', output: "l'homme", desc: 'Article elision' },
+        { input: 'ce est', output: "c'est", desc: 'Demonstrative elision' },
+        { input: 'de eau', output: "d'eau", desc: 'Preposition elision' }
+      ],
+      'es-ES': [
+        { input: 'de el', output: 'del', desc: 'Contraction' },
+        { input: 'a el', output: 'al', desc: 'Contraction' },
+        { input: 'dar me', output: 'darme', desc: 'Clitic attachment' },
+        { input: 'hablar te', output: 'hablarte', desc: 'Clitic attachment' }
+      ],
+      'de-DE': [
+        { input: 'Haus Tür', output: 'Haustür', desc: 'Compound noun' },
+        { input: 'Auto Bahn', output: 'Autobahn', desc: 'Compound noun' },
+        { input: 'Wasser Fall', output: 'Wasserfall', desc: 'Compound noun' }
+      ],
+      'en-US': [
+        { input: 'a apple', output: 'an apple', desc: 'Article alternation' },
+        { input: 'sing ing', output: 'singing', desc: 'Suffix attachment' },
+        { input: 'un happy', output: 'unhappy', desc: 'Prefix attachment' }
+      ],
+      'it-IT': [
+        { input: 'lo amico', output: "l'amico", desc: 'Article elision' },
+        { input: 'una amica', output: "un'amica", desc: 'Article elision' },
+        { input: 'bella mente', output: 'bellamente', desc: 'Suffix derivation' }
+      ]
+    };
+
+    function updateExamples() {
+      const examplesContainer = document.getElementById('examples');
+      const langExamples = examples[currentLang] || [];
+      
+      examplesContainer.innerHTML = langExamples.map(ex => `
+        <div class="example-card" onclick="tryExample('${ex.input}')">
+          <div class="example-before">${ex.input}</div>
+          <div class="example-after">→ ${ex.output}</div>
+          <div style="font-size: 12px; color: #666; margin-top: 5px;">${ex.desc}</div>
+        </div>
+      `).join('');
+    }
+
+    function updateLanguageTabs() {
+      document.querySelectorAll('.language-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.lang === currentLang);
+      });
+    }
+
+    async function transformText() {
+      const input = document.getElementById('user-input').value.trim();
+      const resultDiv = document.getElementById('result');
+      const statusDiv = document.getElementById('status');
+      const techDetails = document.getElementById('tech-details');
+      
+      if (!input) {
+        showResult('Please enter some text to transform', '', 'error');
+        return;
+      }
+
+      // Show loading state
+      statusDiv.style.display = 'inline-block';
+      statusDiv.className = 'status loading';
+      statusDiv.textContent = 'Processing...';
+      
+      try {
+        // Load language pack
+        await morph.load(currentLang);
+        
+        // Split input into tokens
+        const tokens = input.split(/\s+/).filter(Boolean);
+        if (tokens.length < 2) {
+          showResult(input, 'Need at least 2 words to join', 'error');
+          return;
+        }
+
+        // Join tokens progressively
+        let result = tokens[0];
+        let explanations = [];
+        let techData = [];
+        
+        for (let i = 1; i < tokens.length; i++) {
+          const decision = await morph.join(result, tokens[i], currentLang);
+          const prevResult = result;
+          result = decision.surfacePrev + (decision.joiner || '') + decision.surfaceNext;
+          
+          if (decision.noSpace) {
+            explanations.push(`Joined "${prevResult}" + "${tokens[i]}" → "${result}"`);
+          }
+          
+          techData.push({
+            step: i,
+            prev: prevResult,
+            next: tokens[i],
+            decision: decision
+          });
+        }
+        
+        const explanation = explanations.length > 0 
+          ? explanations.join('; ')
+          : 'Applied standard spacing rules';
+          
+        showResult(result, explanation, 'success');
+        techDetails.innerHTML = JSON.stringify(techData, null, 2);
+        
+      } catch (error) {
+        showResult('Error processing text', error.message, 'error');
+        techDetails.innerHTML = error.stack || error.message;
+      }
+    }
+
+    function showResult(text, explanation, type) {
+      const resultDiv = document.getElementById('result');
+      const statusDiv = document.getElementById('status');
+      
+      resultDiv.className = `result ${type}`;
+      resultDiv.querySelector('.result-text').textContent = text;
+      resultDiv.querySelector('.result-explanation').textContent = explanation;
+      
+      statusDiv.style.display = 'inline-block';
+      statusDiv.className = `status ${type}`;
+      statusDiv.textContent = type === 'success' ? '✅ Transformed!' : 
+                              type === 'error' ? '❌ Error' : 'Processing...';
+    }
+
+    window.tryExample = function(input) {
+      document.getElementById('user-input').value = input;
+      transformText();
+    };
+
+    window.toggleTechDetails = function() {
+      const techDetails = document.getElementById('tech-details');
+      const isVisible = techDetails.style.display !== 'none';
+      techDetails.style.display = isVisible ? 'none' : 'block';
+    };
+
+    // Event listeners
+    document.getElementById('transform-btn').addEventListener('click', transformText);
+    document.getElementById('user-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') transformText();
+    });
+
+    document.querySelectorAll('.language-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        currentLang = tab.dataset.lang;
+        updateLanguageTabs();
+        updateExamples();
+        
+        // Update placeholder
+        const input = document.getElementById('user-input');
+        const placeholders = {
+          'fr-FR': 'je aime',
+          'es-ES': 'de el',
+          'de-DE': 'Haus Tür',
+          'en-US': 'a apple',
+          'it-IT': 'lo amico'
+        };
+        input.placeholder = placeholders[currentLang] || 'type words here';
+        input.value = placeholders[currentLang] || '';
+      });
+    });
+
+    // Initialize
+    updateLanguageTabs();
+    updateExamples();
+  </script>
+</body>
+</html>

@@ -44,7 +44,13 @@ WebAssembly runtime and API for HFST/GiellaLT morphology in web apps, with a sim
 - **Join decisions use morphological analysis from existing transducers, not separate join files**
 
 ## Demos
+- **🪄 Smart Writing Assistant**: /packages/demo/public/smart-writing.html
+  - **User-friendly interface** with clear examples and explanations
+  - **Interactive language tabs** (French, Spanish, German, English, Italian)
+  - **Real-time text transformation** with visual feedback
+  - **Perfect for non-technical users** - no confusing terminology
 - HFST playground: /packages/demo/public/hfst.html
+  - Technical interface for developers
   - Analyse/applyDown, choose language pack, toggle raw HFST output
   - Tag ordering selector for generation
 - Cohesive text: /packages/demo/public/token-buffer.html
