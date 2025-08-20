@@ -24,12 +24,12 @@ test('French elision handles various cases correctly', async () => {
   configureMorphRuntime('hfst');
   await morph.load('fr-FR');
 
-  // Test various French elision cases
+  // Test various French elision cases (using curly quotes to match TSV gold standard)
   const testCases = [
-    { prev: 'le', next: 'homme', expected: "l'", shouldElide: true },
-    { prev: 'de', next: 'eau', expected: "d'", shouldElide: true },
+    { prev: 'le', next: 'homme', expected: "l\u2019", shouldElide: true },
+    { prev: 'de', next: 'eau', expected: "d\u2019", shouldElide: true },
     { prev: 'le', next: 'chat', expected: 'le', shouldElide: false },
-    { prev: 'si', next: 'il', expected: "s'", shouldElide: true },
+    { prev: 'si', next: 'il', expected: "s\u2019", shouldElide: true },
     { prev: 'si', next: 'elle', expected: 'si', shouldElide: false }
   ];
 
