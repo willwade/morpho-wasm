@@ -12,8 +12,8 @@ test('FST-based French elision works correctly', async () => {
   // Test French elision - should work with our new FST-based system
   const decision = await morph.join('je', 'aime', 'fr-FR');
 
-  // Verify French elision works
-  assert.strictEqual(decision.surfacePrev, "j'");
+  // Verify French elision works (using curly quotes to match TSV test data)
+  assert.strictEqual(decision.surfacePrev, "j\u2019");
   assert.strictEqual(decision.surfaceNext, 'aime');
   assert.strictEqual(decision.joiner, '');
   assert.strictEqual(decision.noSpace, true);
