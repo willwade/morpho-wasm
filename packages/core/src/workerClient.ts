@@ -61,6 +61,10 @@ export class HFSTWorkerClient {
           this.initialized = true; // Mark as initialized to avoid loops
         });
 
+        this.worker.on('exit', (code: number) => {
+          console.log(`🔧 Node.js worker exited with code: ${code}`);
+        });
+
         // Send init and wait for ready
         const resp = await this.request({ type: 'init', wasmUrl, packUrl });
         if (resp.type === 'ready') {
@@ -154,6 +158,37 @@ export class HFSTWorkerClient {
     console.log(`🔧 Worker response:`, resp);
     if (resp.type === 'join') return resp.decision;
     return null;
+  }
+
+  /**
+   * Terminate the worker and clean up resources.
+   * This is important for Node.js environments to prevent hanging processes.
+   */
+  terminate(): void {
+    console.log('🔧 Terminating worker...');
+    if (this.worker) {
+      console.log('🔧 Worker exists, attempting to terminate');
+      try {
+        if (typeof this.worker.terminate === 'function') {
+          // Browser Worker or Node.js worker_threads
+          console.log('🔧 Calling worker.terminate()');
+          this.worker.terminate();
+          console.log('🔧 Worker.terminate() called successfully');
+        } else {
+          console.log('🔧 Worker has no terminate method');
+        }
+      } catch (error) {
+        console.error('🔧 Error terminating worker:', error);
+      }
+      this.worker = null;
+      this.initialized = false;
+      this.pendingResolve = null;
+      this.queue = [];
+      this.sending = false;
+      console.log('🔧 Worker cleanup complete');
+    } else {
+      console.log('🔧 No worker to terminate');
+    }
   }
 }
 

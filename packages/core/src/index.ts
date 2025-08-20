@@ -257,6 +257,14 @@ export const morph: Morph = {
   async join(prev, next, lang) { return activeRuntime.join(prev, next, lang); },
 };
 
+/**
+ * Clean up resources and terminate workers.
+ * Important for Node.js environments to prevent hanging processes.
+ */
+export function cleanup(): void {
+  hfstClient.terminate();
+}
+
 
 
 export type Token = {

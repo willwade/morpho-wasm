@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { morph, configureMorphRuntime, configureMorphHfst } from '../dist/index.js';
+import { morph, configureMorphRuntime, configureMorphHfst, cleanup } from '../dist/index.js';
 
 // Configure HFST runtime with CDN models like the demos do
 configureMorphRuntime('hfst');
@@ -57,4 +57,12 @@ test('english plural generation with HFST CDN models', async () => {
   } catch (error) {
     console.log('⚠️  CDN not available, skipping English test:', error.message);
   }
+});
+
+// Clean up resources immediately after tests complete to prevent hanging
+test('cleanup resources', async () => {
+  // This test runs last and cleans up the worker
+  cleanup();
+  // Give a small delay to ensure cleanup completes
+  await new Promise(resolve => setTimeout(resolve, 100));
 });
