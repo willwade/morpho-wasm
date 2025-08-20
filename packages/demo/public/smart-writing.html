@@ -254,11 +254,11 @@
 
   <script type="module">
     // Use local build for GitHub Pages to avoid CORS worker issues
-    import { morph, configureMorphRuntime, configureMorphHfst } from './packages/core/dist/index.js';
+    import { morph, configureMorphRuntime, configureMorphHfst } from '../../core/dist/index.js';
 
     configureMorphRuntime('hfst');
     configureMorphHfst({
-      wasmUrl: './packages/core/public/wasm/hfst.wasm'
+      wasmUrl: '../../core/public/wasm/hfst.wasm'
     });
 
     let currentLang = 'fr-FR';
