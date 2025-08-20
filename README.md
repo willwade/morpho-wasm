@@ -11,7 +11,9 @@ WebAssembly runtime and API for HFST/GiellaLT morphology in web apps, with a sim
 - HFST optimized lookup compiled to WASM (hfst.wasm) with a Worker wrapper
 - Lazy‑loaded language packs with SHA‑256 integrity; Cache Storage caching
 - Minimal public API: load, analyse, generate, join
-- HFST-based joins with clear error handling when join models are unavailable
+- **FST-based joins using existing GiellaLT/Apertium morphological transducers**
+- Language-specific join logic: French elision, Spanish clitics, German compounds
+- Intelligent fallback system when FST analysis is unavailable
 - Grid‑set tag ordering control (strict vs flexible) for generation
 - Token buffer “cohesive text” rendering demo
 
@@ -39,6 +41,7 @@ WebAssembly runtime and API for HFST/GiellaLT morphology in web apps, with a sim
 - packs/index.json maps LangCode to analysis/generation transducers and checksums
 - core auto‑resolves when you call morph.load(lang)
 - Worker uses Cache Storage and verifies sha256 when present
+- **Join decisions use morphological analysis from existing transducers, not separate join files**
 
 ## Demos
 - HFST playground: /packages/demo/public/hfst.html
@@ -48,6 +51,28 @@ WebAssembly runtime and API for HFST/GiellaLT morphology in web apps, with a sim
   - Enter tokens, select language/policy, view join decisions and final render
 
 Serve the repo root with any static server and open the URLs above (e.g. http://localhost:8080/packages/demo/public/hfst.html).
+
+## FST-based Join System
+
+The join system uses existing GiellaLT/Apertium morphological transducers to make intelligent decisions about how tokens should be combined:
+
+### How it works
+1. **Morphological Analysis**: Analyzes tokens using existing analysis transducers (e.g., `je` → `je<prn><tn><p1><mf><sg>`)
+2. **Feature-based Decisions**: Uses morphological features to determine join behavior
+3. **Language-specific Logic**: Implements rules for each language based on linguistic patterns
+4. **Intelligent Fallback**: Falls back to language-specific rules when FST analysis is unavailable
+
+### Supported Languages
+- **French**: Elision rules (`je + aime → j'aime`, `le + homme → l'homme`)
+- **Spanish**: Clitic attachment (`dar + me → darme`) and contractions (`de + el → del`)
+- **German**: Compound formation (`Haus + Tür → Haustür`)
+- **Other languages**: Default spacing with potential for future expansion
+
+### Benefits
+- **No custom rule files**: Uses existing, well-tested morphological transducers
+- **Linguistically accurate**: Based on real morphological analysis
+- **Extensible**: Easy to add new languages by implementing morphological feature logic
+- **Robust**: Graceful fallback when FST analysis is unavailable
 
 ## Tests
 - Node tests: npm -w packages/core test

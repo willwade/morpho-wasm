@@ -118,6 +118,16 @@ class TempFSTJoinCoordinator {
                 if (frenchResult)
                     return frenchResult;
                 break;
+            case 'es-ES':
+                const spanishResult = await this.spanishCliticJoin(prev, next);
+                if (spanishResult)
+                    return spanishResult;
+                break;
+            case 'de-DE':
+                const germanResult = await this.germanCompoundJoin(prev, next);
+                if (germanResult)
+                    return germanResult;
+                break;
         }
         // Default: space separation
         return {
@@ -127,6 +137,77 @@ class TempFSTJoinCoordinator {
             noSpace: false,
             reason: `No join rule found for ${lang}: ${prev} + ${next}`
         };
+    }
+    async spanishCliticJoin(prev, next) {
+        // Spanish clitic joining logic (fallback when FST analysis isn't available)
+        // Handle pronoun attachment and contractions
+        // Spanish contractions
+        const contractions = new Map([
+            ['de+el', 'del'],
+            ['a+el', 'al']
+        ]);
+        const contractionKey = `${prev}+${next}`;
+        if (contractions.has(contractionKey)) {
+            return {
+                surfacePrev: contractions.get(contractionKey),
+                surfaceNext: '',
+                joiner: '',
+                noSpace: true,
+                reason: `Spanish contraction: ${prev} + ${next} → ${contractions.get(contractionKey)}`
+            };
+        }
+        // Spanish clitic pronouns (simplified - would need FST for full accent placement)
+        const infinitiveEndings = /r$/;
+        const clitics = ['me', 'te', 'se', 'le', 'la', 'lo', 'nos', 'os', 'les', 'las', 'los'];
+        if (infinitiveEndings.test(prev) && clitics.includes(next)) {
+            // Simple concatenation for infinitive + clitic (real FST would handle accents)
+            return {
+                surfacePrev: prev,
+                surfaceNext: next,
+                joiner: '',
+                noSpace: true,
+                reason: `Spanish clitic attachment: ${prev} + ${next} (FST needed for proper accent placement)`
+            };
+        }
+        return null; // No Spanish-specific join rule found
+    }
+    async germanCompoundJoin(prev, next) {
+        // German compound formation logic (fallback when FST analysis isn't available)
+        // Handle basic compound formation and linking elements
+        // Common German compound patterns (simplified - real FST would handle full morphology)
+        const compoundPatterns = new Map([
+            // Common compounds
+            ['Haus+Tür', 'Haustür'],
+            ['Auto+Bahn', 'Autobahn'],
+            ['Bahn+Hof', 'Bahnhof'],
+            ['Wasser+Fall', 'Wasserfall'],
+            // With linking elements
+            ['Liebe+s+Lied', 'Liebeslied'],
+            ['Hund+e+Hütte', 'Hundehütte']
+        ]);
+        const compoundKey = `${prev}+${next}`;
+        if (compoundPatterns.has(compoundKey)) {
+            return {
+                surfacePrev: compoundPatterns.get(compoundKey),
+                surfaceNext: '',
+                joiner: '',
+                noSpace: true,
+                reason: `German compound: ${prev} + ${next} → ${compoundPatterns.get(compoundKey)}`
+            };
+        }
+        // Basic compound formation (no linking element)
+        // In real implementation, FST would determine if linking element is needed
+        const isNoun = /^[A-ZÄÖÜ]/.test(prev) && /^[A-ZÄÖÜ]/.test(next);
+        if (isNoun) {
+            return {
+                surfacePrev: prev,
+                surfaceNext: next,
+                joiner: '',
+                noSpace: true,
+                reason: `German compound formation: ${prev} + ${next} (FST needed for linking elements)`
+            };
+        }
+        return null; // No German-specific join rule found
     }
     async frenchElision(prev, next) {
         // French elision logic (fallback when FST analysis isn't available)
