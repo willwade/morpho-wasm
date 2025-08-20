@@ -253,12 +253,12 @@
   </div>
 
   <script type="module">
-    // Use CDN for GitHub Pages deployment
-    import { morph, configureMorphRuntime, configureMorphHfst } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/dist/index.js';
+    // Use local build for GitHub Pages to avoid CORS worker issues
+    import { morph, configureMorphRuntime, configureMorphHfst } from './packages/core/dist/index.js';
 
     configureMorphRuntime('hfst');
     configureMorphHfst({
-      wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/public/wasm/hfst.wasm'
+      wasmUrl: './packages/core/public/wasm/hfst.wasm'
     });
 
     let currentLang = 'fr-FR';
