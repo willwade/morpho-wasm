@@ -1,0 +1,26 @@
+{
+  "language": "da-DK",
+  "iso": "da",
+  "version": "v1",
+  "created_at": "2025-08-19T23:42:10.498Z",
+  "source": {
+    "analyser_url": "http://models.uralicnlp.com/nightly/dan/analyser-gt-desc.hfstol",
+    "generator_url": "http://models.uralicnlp.com/nightly/dan/generator-gt-norm.hfstol",
+    "grammar_url": null,
+    "semsets_url": null
+  },
+  "files": {
+    "analyser": "analysis.hfstol",
+    "analyser_br": "analysis.hfstol.br",
+    "generator": "generate.hfstol",
+    "grammar": null,
+    "semsets": null
+  },
+  "checksums": {
+    "analyser_sha256": "5122a1349ffdb0533d6231344edc8b289af5531d45bd093e126af6faa37a045f",
+    "generator_sha256": "50914f05e61711d9bd97449b3d5aec77854e26c6f781d5e2e327efa084c49ea6",
+    "grammar_sha256": null,
+    "semsets_sha256": null
+  },
+  "notes": "UralicNLP nightly build. Verify per-language licence before bundling."
+}

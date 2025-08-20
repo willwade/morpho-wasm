@@ -9,5 +9,5 @@
     "lib": ["ES2020", "DOM"],
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "test", "src/worker.ts"]
+  "exclude": ["dist", "test"]
 }

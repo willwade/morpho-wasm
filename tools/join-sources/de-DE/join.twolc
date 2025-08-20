@@ -1,0 +1,19 @@
+! HFST twolc rules for German (de-DE) joins
+! Phonological rules for token joining
+
+Alphabet
+a b c d e f g h i j k l m n o p q r s t u v w x y z
+A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+à á â ä æ é è ê ë î ï ì í ô ö ò ó œ ù ú û ü ỳ ý ÿ
+ç ñ ß
+' - + ;
+
+Sets
+Vowel = a e i o u à á â ä æ é è ê ë î ï ì í ô ö ò ó œ ù ú û ü ỳ ý ÿ
+      A E I O U À Á Â Ä Æ É È Ê Ë Î Ï Ì Í Ô Ö Ò Ó Œ Ù Ú Û Ü Ỳ Ý Ÿ ;
+
+Rules
+
+! Example rule for German
+"Vowel context rule"
+Vowel:Vowel <=> _ ;

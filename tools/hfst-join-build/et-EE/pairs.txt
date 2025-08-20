@@ -1,0 +1,2 @@
+auto tee:autotee
+kodu linn:kodulinn

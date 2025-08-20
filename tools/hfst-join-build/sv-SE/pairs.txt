@@ -1,0 +1,2 @@
+bil väg:bilväg
+hem stad:hemstad

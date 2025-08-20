@@ -32,7 +32,7 @@ Core methods:
 - await morph.join(prev, next, lang)
 
 Runtime selection:
-- configureMorphRuntime('hfst') to use the HFST Worker stub + rules for join
+- configureMorphRuntime('hfst') to use the HFST Worker with HFST-based joins
 - configureMorphHfst({ wasmUrl, packUrl? }) to set WASM and optional pack URL
   - If packUrl is omitted, core will fetch /packs/index.json and resolve by lang
 
@@ -47,12 +47,12 @@ Tag ordering policy (Asterics requirement):
 - The Worker caches fetched pack files in Cache Storage ('morph-packs-v1') and verifies checksums when present
 - Use packUrl param to override the analysis URL; generation can be hinted with gen= and gensha256=
 
-## 3. Join rules and cohesive text
+## 3. HFST-based joins and cohesive text
 
-- morph.join is rule-based for now, with language-specific behavior
-  - French: elision for je/le/la/ce/se before vowel or mute h; expanded h-aspiré list
-  - English: a/an alternation, simple affix concatenations, child+ren → children
-  - Italian: l’ and un’ elision; -mente derivation
+- morph.join uses HFST join models when available, with clear error messages when not
+  - Join models are loaded from language packs (join.hfstol files)
+  - When no join model is available, returns "no join model loaded for {lang}" message
+  - Language-specific joining behavior (elision, article alternation, etc.) is handled by HFST transducers
 - Token buffer demo: /packages/demo/public/token-buffer.html
   - Enter tokens and inspect JoinDecision chain to render cohesive text
 
@@ -73,7 +73,7 @@ Serve the repo with a static server at project root.
 
 ## 6. Contributing
 
-- Keep language-specific rules minimal and covered by TSV tests
-- Prefer integrating HFST features to drive join decisions where possible
+- Join decisions are handled exclusively by HFST models; no rule-based fallbacks
+- Language-specific join behavior should be implemented in HFST transducers
 - Ensure Worker requests are serialized (queue implemented in workerClient)
 - Discuss pack licensing (GiellaLT analysers vary); update THIRD_PARTY_NOTICES

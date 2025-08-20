@@ -11,7 +11,7 @@ WebAssembly runtime and API for HFST/GiellaLT morphology in web apps, with a sim
 - HFST optimized lookup compiled to WASM (hfst.wasm) with a Worker wrapper
 - Lazy‑loaded language packs with SHA‑256 integrity; Cache Storage caching
 - Minimal public API: load, analyse, generate, join
-- Join rules for French/English/Italian (e.g., FR elision, EN “a/an”, IT l’/un’)
+- HFST-based joins with clear error handling when join models are unavailable
 - Grid‑set tag ordering control (strict vs flexible) for generation
 - Token buffer “cohesive text” rendering demo
 

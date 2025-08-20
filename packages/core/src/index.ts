@@ -40,9 +40,11 @@ function getStemmer(lang: LangCode) {
   if (!stemmers[lang]) {
     const name = snowballMap[lang];
     if (!name) throw new Error(`Unsupported language: ${lang}`);
-    // In browser demo context, Snowball may be unavailable; use identity stub
+    // Make Snowball unavailability obvious instead of silent fallback
     if (!Snowball) {
-      stemmers[lang] = { stem: (s: string) => s } as any;
+      stemmers[lang] = {
+        stem: (s: string) => `SNOWBALL_UNAVAILABLE_IN_BROWSER:${s}`
+      } as any;
     } else {
       stemmers[lang] = Snowball.newStemmer(name);
     }
@@ -78,6 +80,7 @@ export type Analyse = {
   lemma: string;
   tags: string[];
   surface: string;
+  error?: string; // Optional error message for HFST failures
 };
 
 export type GenerateInput = {
@@ -88,7 +91,7 @@ export type GenerateInput = {
 export type JoinDecision = {
   surfacePrev: string;
   surfaceNext: string;
-  joiner: "" | " " | "-" | "’";
+  joiner: '' | ' ' | '-' | "'";
   noSpace: boolean;
   reason: string;
 };
@@ -128,7 +131,7 @@ const ruleRuntime: Morph = {
     return [input.lemma];
   },
   async join(prev, next, lang) {
-    // Delegate join decisions to @morphgrid/joiner
+    // Delegate join decisions to @morphgrid/joiner without HFST adapter
     const { decideJoin } = await import('@morphgrid/joiner');
     return decideJoin(prev, next, lang);
   },
@@ -138,6 +141,14 @@ const ruleRuntime: Morph = {
 import { HFSTWorkerClient } from "./workerClient.js";
 const hfstClient = new HFSTWorkerClient();
 let hfstWasmUrl = "./wasm/hfst.wasm";
+
+// HFST adapter that delegates to the worker client
+class HFSTWorkerJoinAdapter {
+  async applyJoin(prev: string, next: string, lang: string): Promise<JoinDecision | null> {
+    const result = await hfstClient.applyJoin(prev, next, lang);
+    return result;
+  }
+}
 // Debug: expose last raw HFST outputs
 export let lastHfstUpRaw: string[] = [];
 export let lastHfstDownRaw: string[] = [];
@@ -192,12 +203,17 @@ const hfstRuntimeStub: Morph = {
     await ruleRuntime.load(lang);
   },
   async analyse(surface, lang) {
-    // Use HFST applyUp; map to Analyse[] with a simple heuristic
+    // Use HFST applyUp; NO fallback to rules - make failures obvious
     const lines = await hfstClient.applyUp(surface);
     lastHfstUpRaw = lines || [];
     if (!lines || lines.length === 0) {
-      // fallback to rule runtime if no analyses
-      return ruleRuntime.analyse(surface, lang);
+      // Return clear error instead of falling back to rules
+      return [{
+        lemma: surface,
+        surface,
+        tags: ["HFST_ANALYSIS_FAILED"],
+        error: `HFST analysis failed for '${surface}' in ${lang} - no HFST model loaded or model returned no results`
+      }];
     }
     const out: Analyse[] = lines.map((line: string) => {
       const first = (line || '').trim().split(/\s+/)[0] || '';
@@ -209,19 +225,22 @@ const hfstRuntimeStub: Morph = {
     return out;
   },
   async generate(input, lang) {
-    // Use HFST applyDown when available; fall back to rules if empty
+    // Use HFST applyDown; NO fallback to rules - make failures obvious
     const tags = orderTagsForGenerate(input.tags || []);
     const joinedPlus = [input.lemma, ...tags].join('+');
     const lines = await hfstClient.applyDown(joinedPlus);
     lastHfstDownRaw = lines || [];
     if (!lines || lines.length === 0) {
-      return ruleRuntime.generate({ ...input, tags }, lang);
+      // Return clear error instead of falling back to rules
+      return [`HFST_GENERATION_FAILED:${joinedPlus}:no_HFST_model_loaded_or_no_results_for_${lang}`];
     }
     return lines;
   },
   async join(prev, next, lang) {
-    // Join remains rule-based for now
-    return ruleRuntime.join(prev, next, lang);
+    // Use HFST-based joins with worker adapter
+    const { decideJoin } = await import('@morphgrid/joiner');
+    const adapter = new HFSTWorkerJoinAdapter();
+    return decideJoin(prev, next, lang, { hfst: adapter });
   },
 };
 

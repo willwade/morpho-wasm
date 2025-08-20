@@ -1,0 +1,23 @@
+! HFST join transducer for Spanish (es-ES)
+! Generated automatically from linguistic rules
+! This transducer handles token joining for Spanish
+
+Multichar_Symbols
++Join
+VOWEL
+STEM
+ADJ
+
+LEXICON Root
+JoinRules ;
+
+LEXICON JoinRules
+! Default: space join
+%<PREV%>%<SPACE%>%<NEXT%> # ;
+
+! de + el contraction
+de el:del # ;
+
+! a + el contraction
+a el:al # ;
+

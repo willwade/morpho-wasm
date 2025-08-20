@@ -2,7 +2,7 @@
 
 This package contains a runtime toggle and a Worker scaffold for integrating an HFST WebAssembly runtime.
 
-- `configureMorphRuntime('hfst')` switches the core to use the HFST path (currently a stub that still delegates to rules).
+- `configureMorphRuntime('hfst')` switches the core to use the HFST path with HFST-based joins.
 - `configureMorphHfst({ wasmUrl })` lets you override the default WASM URL (`./wasm/hfst.wasm`).
 - The Worker code lives in `src/worker.ts`; it is compiled with `npm run build:worker` to `dist-worker/worker.js`.
 - A minimal Worker client is in `src/workerClient.ts`.
@@ -37,5 +37,5 @@ await morph.load('fr-FR');
 const analyses = await morph.analyse('aime', 'fr-FR');
 ```
 
-Until the WASM is wired, the API will behave like the rules runtime.
+Join functionality requires HFST join models to be available in language packs.
 

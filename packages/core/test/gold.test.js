@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
-import { morph } from '../dist/index.js';
+import { morph, configureMorphRuntime } from '../dist/index.js';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+
+// Configure to use HFST runtime for FST-based joins
+configureMorphRuntime('hfst');
 
 // Helper to render JoinDecision to a string
 function render(decision) {

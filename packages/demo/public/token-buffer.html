@@ -58,7 +58,7 @@
           <option value="quiero le+dar">quiero le+dar → quiero darle</option>
         </optgroup>
         <optgroup label="de-DE">
-          <option value="Haus Tür">Haus Tür → Haustür</option>
+          <option value="un glücklich">un glücklich → unglücklich</option>
         </optgroup>
         <optgroup label="fi-FI">
           <option value="talo ssa">talo ssa → talossa</option>
@@ -97,9 +97,33 @@
   </div>
 
   <script type="module">
-    import { morph, configureMorphRuntime, configureMorphHfst, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@1.0.2/dist/index.js';
+    import { morph, configureMorphRuntime, configureMorphHfst, configureTagOrdering } from 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/dist/index.js';
     configureMorphRuntime('hfst');
-    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@1.0.2/public/wasm/hfst.wasm' });
+    configureMorphHfst({ wasmUrl: 'https://cdn.jsdelivr.net/npm/@morphgrid/core@latest/public/wasm/hfst.wasm' });
+
+    // Auto-load pack for language
+    async function loadPackForLang(lang) {
+      try {
+        const res = await fetch('https://cdn.jsdelivr.net/npm/@morphgrid/packs@latest/index.json', { cache: 'no-cache' });
+        if (!res.ok) throw new Error('index.json not found');
+        const idx = await res.json();
+        const entry = idx?.[lang];
+        if (entry?.analysis) {
+          const params = new URLSearchParams();
+          if (entry.sha256) params.set('sha256', entry.sha256);
+          if (entry.generation) params.set('gen', entry.generation);
+          if (entry.generationSha256) params.set('gensha256', entry.generationSha256);
+          const url = 'https://cdn.jsdelivr.net/npm/@morphgrid/packs@latest' + entry.analysis + (params.toString() ? `?${params}` : '');
+          configureMorphHfst({ packUrl: url });
+          await morph.load(lang);
+          logLine(`Pack for ${lang} loaded from CDN manifest.`);
+        } else {
+          logLine(`No pack entry for ${lang} in CDN index.json`);
+        }
+      } catch (e) {
+        logLine('Auto-pack error: ' + (e?.message || e));
+      }
+    }
 
     const log = document.getElementById('log');
     const exampleSel = document.getElementById('example');
@@ -109,7 +133,7 @@
     const tokensEl = document.getElementById('tokens');
     const policySel = document.getElementById('tagPolicy');
     const outSpan = document.getElementById('rendered');
-    await morph.load(langSel.value);
+    await loadPackForLang(langSel.value);
 
     // When an example is chosen, set tokens and optionally switch language group
     exampleSel.addEventListener('change', async () => {
@@ -119,13 +143,13 @@
       const grp = exampleSel.selectedOptions[0]?.parentElement?.label;
       if (grp && langSel.value !== grp) {
         langSel.value = grp;
-        await morph.load(langSel.value);
+        await loadPackForLang(langSel.value);
       }
       await renderCohesive();
     });
 
     async function joinPair(prev, next, lang) {
-      // Use morph.join (rule-based) for now
+      // Use FST-based join system
       return await morph.join(prev, next, lang);
     }
 
@@ -154,7 +178,7 @@
 
     document.getElementById('render').onclick = renderCohesive;
     policySel.addEventListener('change', renderCohesive);
-    langSel.addEventListener('change', async () => { await morph.load(langSel.value); await renderCohesive(); });
+    langSel.addEventListener('change', async () => { await loadPackForLang(langSel.value); await renderCohesive(); });
   </script>
 </body>
 </html>

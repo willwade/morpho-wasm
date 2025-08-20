@@ -1,11 +1,15 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
+    "target": "es2020",
+    "module": "es2020",
+    "moduleResolution": "node",
     "outDir": "dist-worker",
     "lib": ["ES2020", "WebWorker"],
-    "target": "es2020"
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": false
   },
-  "include": ["src/worker.ts"],
-  "exclude": []
+  "include": ["src/worker.ts"]
 }
-

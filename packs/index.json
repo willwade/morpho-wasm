@@ -4,27 +4,191 @@
     "analysis": "/packs/fr-FR/v1/analysis.hfstol",
     "sha256": "76fa0a087fb36002087af26c9f874c5e9faef851f3939b728f657785b1e5fce9",
     "generation": "/packs/fr-FR/v1/generate.hfstol",
-    "generationSha256": "3ccb461d99aa9970eb45a746478c1e1a3915dc78aacc6caeaf274a753751b405"
+    "generationSha256": "3ccb461d99aa9970eb45a746478c1e1a3915dc78aacc6caeaf274a753751b405",
+    "join": "/packs/fr-FR/v1/join.hfstol",
+    "joinSha256": "ed0c3f952848621755b2d2b36d6f91c23fd99dd7406b09a032fc4849eb4ebc18"
   },
   "en-US": {
     "version": "v1",
     "analysis": "/packs/en-US/v1/analysis.hfstol",
     "sha256": "efbf81daeaec5e851183780c1310fe09a98bd0da7f5d8d6185f866e9ee4d415d",
     "generation": "/packs/en-US/v1/generate.hfstol",
-    "generationSha256": "efbf81daeaec5e851183780c1310fe09a98bd0da7f5d8d6185f866e9ee4d415d"
+    "generationSha256": "efbf81daeaec5e851183780c1310fe09a98bd0da7f5d8d6185f866e9ee4d415d",
+    "join": "/packs/en-US/v1/join.hfstol",
+    "joinSha256": "183ab687e1ff347667a95d299d9f4ab4eefb952a783a4483e802d2416a01aa64"
   },
   "es-ES": {
     "version": "v1",
     "analysis": "/packs/es-ES/v1/analysis.hfstol",
     "sha256": "a5900b4fbc9b16a0e9f8d5278bae4b9c360a6b71c08d0b0e6e12c0d8d9aaaa31",
     "generation": "/packs/es-ES/v1/generate.hfstol",
-    "generationSha256": "f1924e16abec6939dc494c4ccb4e3798d13c654b949370ff9dffac4b8158835f"
+    "generationSha256": "f1924e16abec6939dc494c4ccb4e3798d13c654b949370ff9dffac4b8158835f",
+    "join": "/packs/es-ES/v1/join.hfstol",
+    "joinSha256": "bd75f3661e9f6720a28dc4e12a9fec90e46401369077b6c79e6c2aefbb561ab7"
   },
   "it-IT": {
     "version": "v1",
     "analysis": "/packs/it-IT/v1/analysis.hfstol",
     "sha256": "4937a01a0bed0aa559fae6bdea19e63682ec1486fcfe9a50a9845253bb319c97",
     "generation": "/packs/it-IT/v1/generate.hfstol",
-    "generationSha256": "8c11e5a1ab9f3379f87436f3f9eeaada8aac680d61e487240308d8583127db79"
+    "generationSha256": "8c11e5a1ab9f3379f87436f3f9eeaada8aac680d61e487240308d8583127db79",
+    "join": "/packs/it-IT/v1/join.hfstol",
+    "joinSha256": "f79caf632c91b1b13e692fdf80e425c5907162c16ef0cd43a3a660007d2ec8f3"
+  },
+  "de-DE": {
+    "version": "v1",
+    "analysis": "/packs/de-DE/v1/analysis.hfstol",
+    "sha256": "fcafda700bb841cbfce72d9d6a3a8837b8dc6191ed63a81d59ae7f8880af27de",
+    "generation": "/packs/de-DE/v1/generate.hfstol",
+    "generationSha256": "a5ac9e3bee100d6b1eabedb1ac103c91d3d0581add21e1044a5f985229098af5",
+    "join": "/packs/de-DE/v1/join.hfstol",
+    "joinSha256": "6afc48a257b49b36e49b0794a0350e59418ad420b669d1f222d6541ef33dcefe"
+  },
+  "fi-FI": {
+    "version": "v1",
+    "analysis": "/packs/fi-FI/v1/analysis.hfstol",
+    "sha256": "c910d143fb235d146bb7104613175b82e0c5a763697f57a87b4a6966c6713fd0",
+    "generation": "/packs/fi-FI/v1/generate.hfstol",
+    "generationSha256": "a70fc5dce229e0db1cf8023e3a0ae57648f83e31ff000ed47dc08d74aa629049",
+    "join": "/packs/fi-FI/v1/join.hfstol",
+    "joinSha256": "81b97d270737d8e229dd8244d2c45f8a6a345b35ae4233d440440c15b29a2e6c"
+  },
+  "sv-SE": {
+    "version": "v1",
+    "analysis": "/packs/sv-SE/v1/analysis.hfstol",
+    "sha256": "41083960edfbbff5643ec1ccd2ffdabfdc33835b99db7f5c9fd566ec04880f89",
+    "generation": "/packs/sv-SE/v1/generate.hfstol",
+    "generationSha256": "474b80975688dbf9250467fa99698e65f1e684e461531167d2cf0a51b3caa39f",
+    "join": "/packs/sv-SE/v1/join.hfstol",
+    "joinSha256": "dbe07c2e328a484a83b309e668649905766f53200664e6f88559dbdf9a56b83c"
+  },
+  "no-NO": {
+    "version": "v1",
+    "analysis": "/packs/no-NO/v1/analysis.hfstol",
+    "sha256": "333d5ddc98cca5115c086a9aff8e85707822c11017189344f5dfa9a64070800f",
+    "generation": "/packs/no-NO/v1/generate.hfstol",
+    "generationSha256": "07b198152589ee1cafc5f9ccf9343d0c6f0be6b94637e2adeb9ae3812699fd62",
+    "join": "/packs/no-NO/v1/join.hfstol",
+    "joinSha256": "065b83a59b9a0e3a0032faaa4db5b4b3c5085f84542e38e43d91c7904bff2406"
+  },
+  "da-DK": {
+    "version": "v1",
+    "analysis": "/packs/da-DK/v1/analysis.hfstol",
+    "sha256": "5122a1349ffdb0533d6231344edc8b289af5531d45bd093e126af6faa37a045f",
+    "generation": "/packs/da-DK/v1/generate.hfstol",
+    "generationSha256": "50914f05e61711d9bd97449b3d5aec77854e26c6f781d5e2e327efa084c49ea6",
+    "join": "/packs/da-DK/v1/join.hfstol",
+    "joinSha256": "b274aa2d82603eb1645381e4cb891607b6d2202c6a350f91b80a62f0124339eb"
+  },
+  "ru-RU": {
+    "version": "v1",
+    "analysis": "/packs/ru-RU/v1/analysis.hfstol",
+    "sha256": "fcd085dfdc1fb5a02d2c381d3c5b643232d86acdc0884d673b43921d9e0a67f2",
+    "generation": "/packs/ru-RU/v1/generate.hfstol",
+    "generationSha256": "bfadc24b15256b8781d7b3dfe40aa363aaa55af4dc9fdc7116d6c2a319aacdc1",
+    "join": "/packs/ru-RU/v1/join.hfstol",
+    "joinSha256": "1c985cac0b0cd509caf1accc266d6e21bba4e8d5b282bdc99259384825b94883"
+  },
+  "et-EE": {
+    "version": "v1",
+    "analysis": "/packs/et-EE/v1/analysis.hfstol",
+    "sha256": "daddd1b7b8b94672670ffdaa61882412f33477745c9676c6d46d0487f45d171b",
+    "generation": "/packs/et-EE/v1/generate.hfstol",
+    "generationSha256": "e01bed6068350f5a909511addbda80e7f673e7802cc9179624c18f78a3164ab2",
+    "join": "/packs/et-EE/v1/join.hfstol",
+    "joinSha256": "e399daeed290e307ba87467f6825f67484fc1a5980b3631edad21f224e45d950"
+  },
+  "eu-ES": {
+    "version": "v1",
+    "analysis": "/packs/eu-ES/v1/analysis.hfstol",
+    "sha256": "9b0726e0dbc13c58e8468d8d5a85d316edb557aa82b9c636f97e274883d8d2e9",
+    "generation": "/packs/eu-ES/v1/generate.hfstol",
+    "generationSha256": "c04f7a6f51f8fa57d2fd4f90c17501ae29d0bb1e6ce7f5960908c1a695d82cc4",
+    "join": "/packs/eu-ES/v1/join.hfstol",
+    "joinSha256": "7bfe46952dbd22a3cb983e15b94e42ce8ca680a0fe194e698fac0675caadf7a7"
+  },
+  "ca-ES": {
+    "version": "v1",
+    "analysis": "/packs/ca-ES/v1/analysis.hfstol",
+    "sha256": "placeholder-sha256-for-ca-es-analysis",
+    "generation": "/packs/ca-ES/v1/generate.hfstol",
+    "generationSha256": "placeholder-sha256-for-ca-es-generation",
+    "source": {
+      "analysis_url": "http://models.uralicnlp.com/nightly/cat/analyser-gt-desc.hfstol",
+      "generation_url": "http://models.uralicnlp.com/nightly/cat/generator-gt-norm.hfstol",
+      "notes": "UralicNLP nightly build - models not yet downloaded"
+    },
+    "join": "/packs/ca-ES/v1/join.hfstol",
+    "joinSha256": "377deb1e8e475dc4f1d7a43cf8567a7fc59cb582f7168e4e1299647e60ac57fd"
+  },
+  "pt-PT": {
+    "version": "v1",
+    "analysis": "/packs/pt-PT/v1/analysis.hfstol",
+    "sha256": "placeholder-sha256-for-pt-pt-analysis",
+    "generation": "/packs/pt-PT/v1/generate.hfstol",
+    "generationSha256": "placeholder-sha256-for-pt-pt-generation",
+    "source": {
+      "analysis_url": "http://models.uralicnlp.com/nightly/por/analyser-gt-desc.hfstol",
+      "generation_url": "http://models.uralicnlp.com/nightly/por/generator-gt-norm.hfstol",
+      "notes": "UralicNLP nightly build - models not yet downloaded"
+    },
+    "join": "/packs/pt-PT/v1/join.hfstol",
+    "joinSha256": "e78ea1097888e4124cb1b19c90dbf43b7c37ca3451a3f1d6c51bf02ed689c47b"
+  },
+  "nl-NL": {
+    "version": "v1",
+    "analysis": "/packs/nl-NL/v1/analysis.hfstol",
+    "sha256": "placeholder-sha256-for-nl-nl-analysis",
+    "generation": "/packs/nl-NL/v1/generate.hfstol",
+    "generationSha256": "placeholder-sha256-for-nl-nl-generation",
+    "source": {
+      "analysis_url": "http://models.uralicnlp.com/nightly/nld/analyser-gt-desc.hfstol",
+      "generation_url": "http://models.uralicnlp.com/nightly/nld/generator-gt-norm.hfstol",
+      "notes": "UralicNLP nightly build - models not yet downloaded"
+    },
+    "join": "/packs/nl-NL/v1/join.hfstol",
+    "joinSha256": "b64389ed7da81ad5014848c8ae76e3c79da91323ad383363702e53698abeeea8"
+  },
+  "cs-CZ": {
+    "version": "v1",
+    "analysis": "/packs/cs-CZ/v1/analysis.hfstol",
+    "sha256": "placeholder-sha256-for-cs-cz-analysis",
+    "generation": "/packs/cs-CZ/v1/generate.hfstol",
+    "generationSha256": "placeholder-sha256-for-cs-cz-generation",
+    "source": {
+      "analysis_url": "http://models.uralicnlp.com/nightly/ces/analyser-gt-desc.hfstol",
+      "generation_url": "http://models.uralicnlp.com/nightly/ces/generator-gt-norm.hfstol",
+      "notes": "UralicNLP nightly build - models not yet downloaded"
+    },
+    "join": "/packs/cs-CZ/v1/join.hfstol",
+    "joinSha256": "42cd6c932677beee50f05c61c57c6fcae2686747ad551eaf9c09da0f58d37ba2"
+  },
+  "hu-HU": {
+    "version": "v1",
+    "analysis": "/packs/hu-HU/v1/analysis.hfstol",
+    "sha256": "placeholder-sha256-for-hu-hu-analysis",
+    "generation": "/packs/hu-HU/v1/generate.hfstol",
+    "generationSha256": "placeholder-sha256-for-hu-hu-generation",
+    "source": {
+      "analysis_url": "http://models.uralicnlp.com/nightly/hun/analyser-gt-desc.hfstol",
+      "generation_url": "http://models.uralicnlp.com/nightly/hun/generator-gt-norm.hfstol",
+      "notes": "UralicNLP nightly build - models not yet downloaded"
+    },
+    "join": "/packs/hu-HU/v1/join.hfstol",
+    "joinSha256": "4729182d323fb025e8efa0ab0fb59002cdeb93fff32dbce2ac0c41711e026363"
+  },
+  "ro-RO": {
+    "version": "v1",
+    "analysis": "/packs/ro-RO/v1/analysis.hfstol",
+    "sha256": "placeholder-sha256-for-ro-ro-analysis",
+    "generation": "/packs/ro-RO/v1/generate.hfstol",
+    "generationSha256": "placeholder-sha256-for-ro-ro-generation",
+    "source": {
+      "analysis_url": "http://models.uralicnlp.com/nightly/ron/analyser-gt-desc.hfstol",
+      "generation_url": "http://models.uralicnlp.com/nightly/ron/generator-gt-norm.hfstol",
+      "notes": "UralicNLP nightly build - models not yet downloaded"
+    },
+    "join": "/packs/ro-RO/v1/join.hfstol",
+    "joinSha256": "87777d4466d6acee22c7a2b189e2e7b1ca9092e8d840bf64197aedcec88dd739"
   }
 }

@@ -1,0 +1,2 @@
+katu valo:katuvalo
+auto tie:autotie
