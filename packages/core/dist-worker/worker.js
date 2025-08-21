@@ -745,7 +745,9 @@ async function handleMessage(msg) {
                     fn(msg.input, outPtr, needed + 1);
                     const s = Module.UTF8ToString(outPtr);
                     Module._free(outPtr);
-                    return s ? s.split('\n') : [];
+                    // Clean up HFST WASM output: remove spaces between characters
+                    const results = s ? s.split('\n').map((line) => line.replace(/\s+/g, '')) : [];
+                    return results;
                 })() : [];
                 postMessage({ type: 'down', outputs });
                 break;
