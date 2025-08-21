@@ -572,7 +572,55 @@ async function handleMessage(msg: WorkerRequest) {
               const lower = u.pathname.toLowerCase();
               const mountPath = lower.endsWith('.pmhfst') ? '/analysis.pmhfst' : '/analysis.hfstol';
               console.log('🔧 Writing transducer to:', mountPath);
-              Module.FS.writeFile(mountPath, buf);
+
+              // Check if the file is GZIP compressed and decompress if needed
+              let finalBuf = buf;
+              if (buf.length > 2 && buf[0] === 0x1f && buf[1] === 0x8b) {
+                console.log('🔧 Detected GZIP compressed file, decompressing...');
+                try {
+                  if (isNodeWorker) {
+                    // Node.js environment - use zlib
+                    const zlib = await import('zlib');
+                    finalBuf = zlib.gunzipSync(buf);
+                    console.log('🔧 Decompressed:', buf.length, '→', finalBuf.length, 'bytes');
+                  } else {
+                    // Browser environment - use DecompressionStream if available
+                    if (typeof DecompressionStream !== 'undefined') {
+                      const stream = new DecompressionStream('gzip');
+                      const writer = stream.writable.getWriter();
+                      const reader = stream.readable.getReader();
+
+                      writer.write(buf);
+                      writer.close();
+
+                      const chunks = [];
+                      let done = false;
+                      while (!done) {
+                        const { value, done: readerDone } = await reader.read();
+                        done = readerDone;
+                        if (value) chunks.push(value);
+                      }
+
+                      const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+                      finalBuf = new Uint8Array(totalLength);
+                      let offset = 0;
+                      for (const chunk of chunks) {
+                        finalBuf.set(chunk, offset);
+                        offset += chunk.length;
+                      }
+                      console.log('🔧 Decompressed:', buf.length, '→', finalBuf.length, 'bytes');
+                    } else {
+                      console.log('🔧 GZIP detected but DecompressionStream not available in browser');
+                      // Fall back to original buffer - will likely fail but at least we tried
+                    }
+                  }
+                } catch (error) {
+                  console.log('🔧 Decompression failed:', error);
+                  // Fall back to original buffer
+                }
+              }
+
+              Module.FS.writeFile(mountPath, finalBuf);
 
               // Verify the file was written correctly
               try {
