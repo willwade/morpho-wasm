@@ -312,9 +312,9 @@
       console.log('🔨 Testing generation with simple tags:');
       const testGens = [
         { lemma: 'walk', tags: ['V'] },
-        { lemma: 'walk', tags: ['PAST'] },
+        { lemma: 'walk', tags: ['V', 'past'] },
         { lemma: 'cat', tags: ['N'] },
-        { lemma: 'cat', tags: ['PL'] },
+        { lemma: 'cat', tags: ['N', 'pl'] },
       ];
 
       for (const gen of testGens) {
@@ -348,12 +348,12 @@
         
         if (isVerb) {
           tags.push('V');
-          if (tense === 'past') tags.push('PAST');
-          if (form === 'progressive') tags.push('PROG');
-          if (tense === 'present' && form === 'base') tags.push('PRES');
+          if (tense === 'past') tags.push('past');
+          if (form === 'progressive') tags.push('pprs');
+          if (tense === 'present' && form === 'base') tags.push('pres');
         } else {
           tags.push('N');
-          if (number === 'plural') tags.push('PL');
+          if (number === 'plural') tags.push('pl');
         }
 
         console.log(`🔨 Generating: lemma="${word}" + tags=[${tags.join(', ')}]`);
