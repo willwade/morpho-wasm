@@ -272,24 +272,18 @@
     // Load English models
     async function loadEnglish() {
       try {
-        const res = await fetch('https://cdn.jsdelivr.net/npm/@morphgrid/packs@latest/index.json');
-        const idx = await res.json();
-        const entry = idx?.['en-US'];
+        // Use GitHub raw URL directly (JSDelivr npm package not published yet)
+        const githubPackUrl = 'https://raw.githubusercontent.com/willwade/morpho-wasm/main/packages/packs/en-US/v1/generate.hfstol';
+        console.log('📦 Loading from GitHub raw URL:', githubPackUrl);
 
-        if (entry?.generation) {
-          // Try GitHub raw URL first (jsdelivr has size limits)
-          const githubPackUrl = 'https://raw.githubusercontent.com/willwade/morpho-wasm/main/packages/packs/en-US/v1/generate.hfstol';
-          console.log('📦 Trying GitHub raw URL:', githubPackUrl);
+        configureMorphHfst({ packUrl: githubPackUrl });
+        await morph.load('en-US');
+        isLoaded = true;
+        console.log('✅ English HFST models loaded successfully from GitHub');
 
-          configureMorphHfst({ packUrl: githubPackUrl });
-          await morph.load('en-US');
-          isLoaded = true;
-          console.log('✅ English HFST models loaded successfully from GitHub');
-
-          // Test what the model actually knows
-          console.log('🧪 Testing model capabilities...');
-          await testModelCapabilities();
-        }
+        // Test what the model actually knows
+        console.log('🧪 Testing model capabilities...');
+        await testModelCapabilities();
       } catch (error) {
         console.error('❌ Failed to load English models:', error);
       }
