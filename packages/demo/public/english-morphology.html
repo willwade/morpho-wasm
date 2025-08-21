@@ -275,16 +275,52 @@
         const res = await fetch('https://cdn.jsdelivr.net/npm/@morphgrid/packs@latest/index.json');
         const idx = await res.json();
         const entry = idx?.['en-US'];
-        
+
         if (entry?.generation) {
           const packUrl = 'https://cdn.jsdelivr.net/npm/@morphgrid/packs@latest' + entry.generation;
           configureMorphHfst({ packUrl });
           await morph.load('en-US');
           isLoaded = true;
           console.log('✅ English HFST models loaded successfully');
+
+          // Test what the model actually knows
+          console.log('🧪 Testing model capabilities...');
+          await testModelCapabilities();
         }
       } catch (error) {
         console.error('❌ Failed to load English models:', error);
+      }
+    }
+
+    // Test what the English HFST model can actually do
+    async function testModelCapabilities() {
+      const testWords = ['walk', 'walked', 'walking', 'walks', 'run', 'ran', 'running', 'runs', 'cat', 'cats'];
+
+      console.log('📝 Testing analysis of known English words:');
+      for (const word of testWords) {
+        try {
+          const analyses = await morph.analyse(word, 'en-US');
+          console.log(`  "${word}" →`, analyses);
+        } catch (error) {
+          console.log(`  "${word}" → ERROR:`, error.message);
+        }
+      }
+
+      console.log('🔨 Testing generation with simple tags:');
+      const testGens = [
+        { lemma: 'walk', tags: ['V'] },
+        { lemma: 'walk', tags: ['PAST'] },
+        { lemma: 'cat', tags: ['N'] },
+        { lemma: 'cat', tags: ['PL'] },
+      ];
+
+      for (const gen of testGens) {
+        try {
+          const forms = await morph.generate(gen, 'en-US');
+          console.log(`  lemma:"${gen.lemma}" + [${gen.tags.join(',')}] →`, forms);
+        } catch (error) {
+          console.log(`  lemma:"${gen.lemma}" + [${gen.tags.join(',')}] → ERROR:`, error.message);
+        }
       }
     }
 
@@ -320,20 +356,30 @@
         console.log(`🔨 Generating: lemma="${word}" + tags=[${tags.join(', ')}]`);
         
         const forms = await morph.generate({ lemma: word, tags }, 'en-US');
-        
+
+        console.log(`📋 Generation result:`, forms);
+
         if (forms && forms.length > 0 && !forms[0].includes('HFST_GENERATION_FAILED')) {
           const result = forms[0];
           const analysis = `lemma: "${word}", tags: [${tags.join(', ')}] → "${result}"`;
           showResult(result, analysis, false);
+          console.log(`✅ Success: ${word} + [${tags.join(', ')}] → ${result}`);
         } else {
-          // Try analysis instead
+          console.log(`❌ Generation failed:`, forms);
+
+          // Try analysis instead to see what the model knows about this word
+          console.log(`🔍 Trying analysis of "${word}"...`);
           const analyses = await morph.analyse(word, 'en-US');
+          console.log(`📋 Analysis result:`, analyses);
+
           if (analyses && analyses.length > 0 && !analyses[0].lemma.includes('HFST_TRANSDUCER_NOT_LOADED')) {
             const analysis = analyses[0];
-            const analysisText = `lemma: "${analysis.lemma}", tags: [${analysis.tags.join(', ')}]`;
-            showResult(word, `Analysis: ${analysisText}`, false);
+            const analysisText = `Analysis: lemma="${analysis.lemma}", tags=[${analysis.tags.join(', ')}]`;
+            showResult(word, analysisText, false);
+            console.log(`✅ Analysis success:`, analysis);
           } else {
-            showResult(word, 'No morphological data available for this word', false, true);
+            showResult(word, `Generation failed: ${forms?.[0] || 'No results'}`, false, true);
+            console.log(`❌ Both generation and analysis failed`);
           }
         }
         
