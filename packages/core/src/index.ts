@@ -202,12 +202,19 @@ let tagOrderPolicy: TagOrderPolicy = 'flexible';
 // Optional canonical order map; lower number = earlier
 const canonicalTagOrder: Record<string, number> = {
   // Example categories: adjust/extend per language
+  // Part of speech comes first
+  'N': 5, 'V': 5, 'ADJ': 5, 'ADV': 5, 'PREP': 5, 'CONJ': 5,
   // Gender before Number, then Case/Person/Tense etc.
   'FEM': 10, 'MASC': 10, 'NEUT': 10,
-  'PL': 20, 'SG': 20,
-  'NOM': 30, 'ACC': 30, 'DAT': 30, 'GEN': 30,
-  '1': 40, '2': 40, '3': 40,
-  'PRS': 50, 'PST': 50, 'FUT': 50,
+  // Tense and aspect come before person/number for verbs
+  'PRS': 20, 'PST': 20, 'FUT': 20, 'pres': 20, 'past': 20, 'inf': 20,
+  'pprs': 25, 'pp': 25, 'imp': 25, 'ger': 25,
+  // Number and person
+  'PL': 30, 'SG': 30, 'pl': 30, 'sg': 30,
+  '1': 35, '2': 35, '3': 35, 'p3': 35,
+  'NOM': 40, 'ACC': 40, 'DAT': 40, 'GEN': 40,
+  // Comparison
+  'comp': 50, 'sup': 50,
 };
 
 export function configureTagOrdering(policy: TagOrderPolicy) {

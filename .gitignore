@@ -142,3 +142,12 @@ vite.config.ts.timestamp-*
 packages/*/node_modules
 packages/*/dist
 packages/*/build
+
+# Backup files
+*.backup
+*.bak
+*~
+*.foma.backup
+*.final
+*.inverted
+*.tropical

@@ -606,29 +606,93 @@ async function handleMessage(msg) {
                                     console.log('🔧 Could not get HFST error message');
                                 }
                             }
+                            // Load generator if specified
                             if (genParam) {
-                                const r2 = await self.caches?.open?.('morph-packs-v1').then(async (c) => {
-                                    const m = await c.match(genParam);
-                                    if (m)
-                                        return m;
-                                    const r = await fetch(genParam);
-                                    if (r && r.ok) {
-                                        await c.put(genParam, r.clone());
-                                        return r;
+                                console.log('🔧 Loading generator from:', genParam);
+                                let genBuffer = null;
+                                if (isNodeWorker) {
+                                    // Node.js: read generator file directly
+                                    try {
+                                        const genUrl = new URL(genParam, 'file:///');
+                                        if (genUrl.protocol === 'file:') {
+                                            const fs = await import('fs');
+                                            const { fileURLToPath } = await import('url');
+                                            const genFilePath = fileURLToPath(genUrl);
+                                            console.log('🔧 Reading generator file:', genFilePath);
+                                            const genFileBuffer = fs.readFileSync(genFilePath);
+                                            genBuffer = new Uint8Array(genFileBuffer);
+                                            console.log('🔧 Generator file read successfully, size:', genBuffer.length);
+                                        }
                                     }
-                                    return r;
-                                }).catch(() => fetch(genParam));
-                                if (r2 && r2.ok) {
-                                    const b2 = new Uint8Array(await r2.arrayBuffer());
+                                    catch (error) {
+                                        console.log('🔧 Failed to read generator file:', error);
+                                    }
+                                }
+                                else {
+                                    // Browser: use cache and fetch
+                                    try {
+                                        const r2 = await self.caches?.open?.('morph-packs-v1').then(async (c) => {
+                                            const m = await c.match(genParam);
+                                            if (m)
+                                                return m;
+                                            const r = await fetch(genParam);
+                                            if (r && r.ok) {
+                                                await c.put(genParam, r.clone());
+                                                return r;
+                                            }
+                                            return r;
+                                        }).catch(() => fetch(genParam));
+                                        if (r2 && r2.ok) {
+                                            genBuffer = new Uint8Array(await r2.arrayBuffer());
+                                        }
+                                    }
+                                    catch (error) {
+                                        console.log('🔧 Failed to fetch generator:', error);
+                                    }
+                                }
+                                if (genBuffer) {
+                                    // Verify SHA if provided
                                     if (genSha) {
-                                        const d2 = await crypto.subtle.digest('SHA-256', b2);
+                                        const d2 = await crypto.subtle.digest('SHA-256', genBuffer.buffer);
                                         const hex2 = [...new Uint8Array(d2)].map(b => b.toString(16).padStart(2, '0')).join('');
                                         if (hex2 !== genSha.toLowerCase())
                                             throw new Error('Generator integrity mismatch');
                                     }
+                                    // Check if generator is GZIP compressed and decompress if needed
+                                    let finalGenBuf = genBuffer;
+                                    if (genBuffer.length > 2 && genBuffer[0] === 0x1f && genBuffer[1] === 0x8b) {
+                                        console.log('🔧 Generator is GZIP compressed, decompressing...');
+                                        try {
+                                            if (isNodeWorker) {
+                                                const zlib = await import('zlib');
+                                                finalGenBuf = new Uint8Array(zlib.gunzipSync(genBuffer));
+                                                console.log('🔧 Generator decompressed:', genBuffer.length, '→', finalGenBuf.length, 'bytes');
+                                            }
+                                            else {
+                                                // Browser decompression would go here if needed
+                                                console.log('🔧 Browser GZIP decompression not implemented');
+                                            }
+                                        }
+                                        catch (error) {
+                                            console.log('🔧 Generator decompression failed:', error);
+                                            finalGenBuf = genBuffer; // Use original if decompression fails
+                                        }
+                                    }
                                     const genPath = genParam.toLowerCase().endsWith('.pmhfst') ? '/generate.pmhfst' : '/generate.hfstol';
-                                    Module.FS.writeFile(genPath, b2);
-                                    Module.cwrap('loadGenerator', 'number', ['string'])(genPath);
+                                    console.log('🔧 Writing generator to:', genPath);
+                                    Module.FS.writeFile(genPath, finalGenBuf);
+                                    console.log('🔧 Calling loadGenerator...');
+                                    const loadGenResult = Module.cwrap('loadGenerator', 'number', ['string'])(genPath);
+                                    console.log('🔧 loadGenerator returned:', loadGenResult);
+                                    if (loadGenResult === 0) {
+                                        console.log('🔧 Generator loaded successfully!');
+                                    }
+                                    else {
+                                        console.log('🔧 Failed to load generator, error code:', loadGenResult);
+                                    }
+                                }
+                                else {
+                                    console.log('🔧 Failed to load generator buffer');
                                 }
                             }
                         }
