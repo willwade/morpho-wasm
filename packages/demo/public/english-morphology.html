@@ -272,8 +272,11 @@
     // Load English models
     async function loadEnglish() {
       try {
-        // Use GitHub raw URL directly (JSDelivr npm package not published yet)
-        const githubPackUrl = 'https://raw.githubusercontent.com/willwade/morpho-wasm/main/packages/packs/en-US/v1/generate.hfstol';
+        // Use GitHub raw URLs for analysis and generation transducers
+        const basePackUrl = 'https://raw.githubusercontent.com/willwade/morpho-wasm/main/packages/packs/en-US/v1/';
+        const githubPackUrl = `${basePackUrl}analysis.hfstol?${new URLSearchParams({
+          gen: `${basePackUrl}generate.hfstol`
+        })}`;
         console.log('📦 Loading from GitHub raw URL:', githubPackUrl);
 
         configureMorphHfst({ packUrl: githubPackUrl });
