@@ -128,6 +128,11 @@ class TempFSTJoinCoordinator {
                 if (germanResult)
                     return germanResult;
                 break;
+            case 'en-US':
+                const englishResult = await this.englishMorphologyJoin(prev, next);
+                if (englishResult)
+                    return englishResult;
+                break;
         }
         // Default: space separation
         return {
@@ -254,6 +259,256 @@ class TempFSTJoinCoordinator {
         // Common h aspiré words that prevent elision
         const hAspireWords = ['haricot', 'héros', 'hibou', 'honte', 'hurler'];
         return hAspireWords.some(h => word.startsWith(h));
+    }
+    async englishMorphologyJoin(prev, next) {
+        const prevLower = prev.toLowerCase();
+        const nextLower = next.toLowerCase();
+        // 1. Article alternation: a/an
+        if (prevLower === 'a') {
+            // Check if next word starts with vowel sound
+            const vowelSounds = /^[aeiou]/i;
+            // Silent H words (hour, honest, honor, heir)
+            const silentHWords = ['hour', 'honest', 'honor', 'honour', 'heir', 'heiress'];
+            const hasSilentH = silentHWords.some(w => nextLower.startsWith(w));
+            const consonantSoundU = /^u[nst]/i; // university, use, usual (yoo sound)
+            const consonantSoundE = /^eu/i; // European (yoo sound)
+            const consonantSoundO = /^one/i; // one (wun sound)
+            const startsWithVowelSound = (vowelSounds.test(nextLower) && !consonantSoundU.test(nextLower) && !consonantSoundE.test(nextLower) && !consonantSoundO.test(nextLower)) ||
+                hasSilentH;
+            if (startsWithVowelSound) {
+                return {
+                    surfacePrev: 'an',
+                    surfaceNext: next,
+                    joiner: ' ',
+                    noSpace: false,
+                    reason: `English article alternation: a + ${next} → an ${next}`
+                };
+            }
+            // Keep "a" for consonant sounds
+            return {
+                surfacePrev: 'a',
+                surfaceNext: next,
+                joiner: ' ',
+                noSpace: false,
+                reason: `English article: a + ${next} (consonant sound)`
+            };
+        }
+        // 2. Contractions with "not"
+        if (nextLower === 'not') {
+            const contractions = {
+                'do': "don't",
+                'does': "doesn't",
+                'did': "didn't",
+                'will': "won't", // irregular
+                'would': "wouldn't",
+                'should': "shouldn't",
+                'can': "can't",
+                'could': "couldn't",
+                'is': "isn't",
+                'are': "aren't",
+                'was': "wasn't",
+                'were': "weren't",
+                'have': "haven't",
+                'has': "hasn't",
+                'had': "hadn't",
+            };
+            const contraction = contractions[prevLower];
+            if (contraction) {
+                return {
+                    surfacePrev: contraction,
+                    surfaceNext: '',
+                    joiner: '',
+                    noSpace: true,
+                    reason: `English contraction: ${prev} + not → ${contraction}`
+                };
+            }
+        }
+        // 3. Pronoun + verb contractions
+        const pronounVerbContractions = {
+            'i': { 'am': "I'm", 'will': "I'll", 'have': "I've", 'had': "I'd", 'would': "I'd" },
+            'you': { 'are': "you're", 'will': "you'll", 'have': "you've", 'had': "you'd", 'would': "you'd" },
+            'he': { 'is': "he's", 'will': "he'll", 'has': "he's", 'had': "he'd", 'would': "he'd" },
+            'she': { 'is': "she's", 'will': "she'll", 'has': "she's", 'had': "she'd", 'would': "she'd" },
+            'it': { 'is': "it's", 'will': "it'll", 'has': "it's", 'had': "it'd", 'would': "it'd" },
+            'we': { 'are': "we're", 'will': "we'll", 'have': "we've", 'had': "we'd", 'would': "we'd" },
+            'they': { 'are': "they're", 'will': "they'll", 'have': "they've", 'had': "they'd", 'would': "they'd" },
+        };
+        const contraction = pronounVerbContractions[prevLower]?.[nextLower];
+        if (contraction) {
+            return {
+                surfacePrev: contraction,
+                surfaceNext: '',
+                joiner: '',
+                noSpace: true,
+                reason: `English contraction: ${prev} + ${next} → ${contraction}`
+            };
+        }
+        // 4. Inflectional morphology - verb suffixes
+        if (['s', 'es', 'ing', 'ed'].includes(nextLower)) {
+            return this.englishInflection(prev, next);
+        }
+        // 5. Inflectional morphology - noun plurals
+        if (['ies', 'ren', 'en'].includes(nextLower)) {
+            return this.englishNounPlural(prev, next);
+        }
+        // 6. Derivational morphology - prefixes
+        const prefixes = ['un', 'in', 'im', 'dis', 're', 'pre', 'mis', 'non', 'anti', 'de', 'over', 'under'];
+        if (prefixes.includes(prevLower)) {
+            return {
+                surfacePrev: prev + next,
+                surfaceNext: '',
+                joiner: '',
+                noSpace: true,
+                reason: `English prefix: ${prev} + ${next} → ${prev}${next}`
+            };
+        }
+        // 7. Derivational morphology - suffixes
+        const suffixes = ['er', 'or', 'ness', 'ful', 'less', 'ly', 'ment', 'tion', 'able', 'ible', 'ous', 'ive'];
+        if (suffixes.includes(nextLower)) {
+            return this.englishDerivationalSuffix(prev, next);
+        }
+        // 8. Compound formation
+        // 8a. Hyphenated compounds (mother + in-law → mother-in-law)
+        const hyphenatedCompounds = [
+            'mother+in-law', 'father+in-law', 'sister+in-law', 'brother+in-law',
+            'well+known', 'self+aware', 'up+to-date', 'state+of-the-art'
+        ];
+        const hyphenatedKey = `${prevLower}+${nextLower}`;
+        if (hyphenatedCompounds.includes(hyphenatedKey)) {
+            return {
+                surfacePrev: prev,
+                surfaceNext: next,
+                joiner: '-',
+                noSpace: false,
+                reason: `English hyphenated compound: ${prev} + ${next} → ${prev}-${next}`
+            };
+        }
+        // 8b. Closed compounds (no space)
+        const compoundWords = [
+            'sun+flower', 'tooth+brush', 'basket+ball', 'foot+ball', 'base+ball',
+            'bed+room', 'class+room', 'bath+room', 'book+case', 'note+book'
+        ];
+        const compoundKey = `${prevLower}+${nextLower}`;
+        if (compoundWords.includes(compoundKey)) {
+            return {
+                surfacePrev: prev + next,
+                surfaceNext: '',
+                joiner: '',
+                noSpace: true,
+                reason: `English compound: ${prev} + ${next} → ${prev}${next}`
+            };
+        }
+        return null; // No English-specific join rule found
+    }
+    async englishInflection(stem, suffix) {
+        const stemLower = stem.toLowerCase();
+        const suffixLower = suffix.toLowerCase();
+        let result = stem + suffix;
+        let reason = `English inflection: ${stem} + ${suffix}`;
+        // Handle different suffix types
+        if (suffixLower === 'ing') {
+            // Drop final 'e' before -ing (make → making)
+            if (stem.endsWith('e') && !stem.endsWith('ee')) {
+                result = stem.slice(0, -1) + suffix;
+                reason += ` (e-drop) → ${result}`;
+            }
+            // Double final consonant for CVC pattern (run → running)
+            else if (/[^aeiou][aeiou][^aeiouwxy]$/.test(stemLower)) {
+                result = stem + stem.slice(-1) + suffix;
+                reason += ` (doubling) → ${result}`;
+            }
+            else {
+                result = stem + suffix;
+                reason += ` → ${result}`;
+            }
+        }
+        else if (suffixLower === 'ed') {
+            // Drop final 'e' before -ed (love → loved)
+            if (stem.endsWith('e')) {
+                result = stem.slice(0, -1) + suffix;
+                reason += ` (e-drop) → ${result}`;
+            }
+            // Double final consonant for CVC pattern (stop → stopped)
+            else if (/[^aeiou][aeiou][^aeiouwxy]$/.test(stemLower)) {
+                result = stem + stem.slice(-1) + suffix;
+                reason += ` (doubling) → ${result}`;
+            }
+            else {
+                result = stem + suffix;
+                reason += ` → ${result}`;
+            }
+        }
+        else if (suffixLower === 's' || suffixLower === 'es') {
+            result = stem + suffix;
+            reason += ` → ${result}`;
+        }
+        return {
+            surfacePrev: result,
+            surfaceNext: '',
+            joiner: '',
+            noSpace: true,
+            reason
+        };
+    }
+    async englishNounPlural(stem, suffix) {
+        const suffixLower = suffix.toLowerCase();
+        let result = stem + suffix;
+        let reason = `English plural: ${stem} + ${suffix}`;
+        if (suffixLower === 'ies') {
+            // baby + ies → babies (consonant + y → ies)
+            // Check if stem ends in consonant + y
+            if (stem.length >= 2 && stem.endsWith('y') && !/[aeiou]/.test(stem[stem.length - 2])) {
+                result = stem.slice(0, -1) + suffix;
+                reason += ` (y→ies) → ${result}`;
+            }
+            else {
+                result = stem + suffix;
+                reason += ` → ${result}`;
+            }
+        }
+        else if (suffixLower === 'ren') {
+            // child + ren → children
+            result = stem + suffix;
+            reason += ` → ${result}`;
+        }
+        else if (suffixLower === 'en') {
+            // ox + en → oxen
+            result = stem + suffix;
+            reason += ` → ${result}`;
+        }
+        return {
+            surfacePrev: result,
+            surfaceNext: '',
+            joiner: '',
+            noSpace: true,
+            reason
+        };
+    }
+    async englishDerivationalSuffix(stem, suffix) {
+        const suffixLower = suffix.toLowerCase();
+        let result = stem + suffix;
+        let reason = `English derivation: ${stem} + ${suffix}`;
+        // Y → i before -ness (happy + ness → happiness)
+        if (suffixLower === 'ness' && stem.length >= 2 && stem.endsWith('y') && !/[aeiou]/.test(stem[stem.length - 2])) {
+            result = stem.slice(0, -1) + 'i' + suffix;
+            reason += ` (y→i) → ${result}`;
+        }
+        // Drop final 'e' before vowel-initial suffixes (write + er → writer)
+        else if (stem.endsWith('e') && /^[aeiou]/.test(suffix)) {
+            result = stem.slice(0, -1) + suffix;
+            reason += ` (e-drop) → ${result}`;
+        }
+        else {
+            result = stem + suffix;
+            reason += ` → ${result}`;
+        }
+        return {
+            surfacePrev: result,
+            surfaceNext: '',
+            joiner: '',
+            noSpace: true,
+            reason
+        };
     }
 }
 // Node.js worker_threads compatibility
