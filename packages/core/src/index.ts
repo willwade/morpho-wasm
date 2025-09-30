@@ -34,22 +34,49 @@ const snowballMap: Record<LangCode, string> = {
   "eu-ES": "basque",
 };
 
+const baseLangAliases: Record<string, LangCode> = {
+  fr: "fr-FR",
+  es: "es-ES",
+  en: "en-US",
+  de: "de-DE",
+  it: "it-IT",
+  fi: "fi-FI",
+  cy: "cy-GB",
+  eu: "eu-ES",
+};
+
+const langAliasMap: Record<string, LangCode> = {};
+for (const code of Object.keys(snowballMap) as LangCode[]) {
+  const lower = code.toLowerCase();
+  langAliasMap[lower] = code;
+  langAliasMap[lower.replace(/-/g, "_")] = code;
+}
+for (const [alias, canonical] of Object.entries(baseLangAliases)) {
+  langAliasMap[alias] = canonical;
+}
+
+function normalizeLangCode(lang: LangCode | string): LangCode {
+  const key = (lang || "").toLowerCase().replace(/_/g, "-");
+  return langAliasMap[key] ?? langAliasMap[key.split('-')[0]] ?? (lang as LangCode);
+}
+
 const stemmers: Partial<Record<LangCode, any>> = {};
 
-function getStemmer(lang: LangCode) {
-  if (!stemmers[lang]) {
-    const name = snowballMap[lang];
+function getStemmer(lang: LangCode | string) {
+  const canonical = normalizeLangCode(lang);
+  if (!stemmers[canonical]) {
+    const name = snowballMap[canonical];
     if (!name) throw new Error(`Unsupported language: ${lang}`);
     // Make Snowball unavailability obvious instead of silent fallback
     if (!Snowball) {
-      stemmers[lang] = {
+      stemmers[canonical] = {
         stem: (s: string) => `SNOWBALL_UNAVAILABLE_IN_BROWSER:${s}`
       } as any;
     } else {
-      stemmers[lang] = Snowball.newStemmer(name);
+      stemmers[canonical] = Snowball.newStemmer(name);
     }
   }
-  return stemmers[lang];
+  return stemmers[canonical];
 }
 
 function pluralize(lemma: string, lang: LangCode): string {
@@ -292,10 +319,22 @@ export function configureMorphRuntime(mode: "rules" | "hfst") {
 }
 
 export const morph: Morph = {
-  async load(lang) { return activeRuntime.load(lang); },
-  async analyse(surface, lang) { return activeRuntime.analyse(surface, lang); },
-  async generate(input, lang) { return activeRuntime.generate(input, lang); },
-  async join(prev, next, lang) { return activeRuntime.join(prev, next, lang); },
+  async load(lang) {
+    const canonical = normalizeLangCode(lang);
+    return activeRuntime.load(canonical);
+  },
+  async analyse(surface, lang) {
+    const canonical = normalizeLangCode(lang);
+    return activeRuntime.analyse(surface, canonical);
+  },
+  async generate(input, lang) {
+    const canonical = normalizeLangCode(lang);
+    return activeRuntime.generate(input, canonical);
+  },
+  async join(prev, next, lang) {
+    const canonical = normalizeLangCode(lang);
+    return activeRuntime.join(prev, next, canonical);
+  },
 };
 
 /**

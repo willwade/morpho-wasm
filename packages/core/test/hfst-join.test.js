@@ -85,3 +85,32 @@ test('Join decision structure is consistent', async () => {
   const allowedJoiners = ['', ' ', '-', "'"];
   assert.ok(allowedJoiners.includes(decision.joiner));
 });
+
+test('Language code normalization works for join operations', async () => {
+  configureMorphRuntime('hfst');
+  await morph.load('fr-FR');
+
+  // Test that short language codes (e.g., 'fr') are normalized to full codes (e.g., 'fr-FR')
+  const testCases = [
+    { prev: 'le', next: 'ami', lang: 'fr' },
+    { prev: 'de', next: 'eau', lang: 'fr' },
+    { prev: 'que', next: 'il', lang: 'fr' },
+    { prev: 'je', next: 'aime', lang: 'fr' }
+  ];
+
+  for (const testCase of testCases) {
+    const decision = await morph.join(testCase.prev, testCase.next, testCase.lang);
+
+    // Should apply French elision even with short language code
+    assert.strictEqual(decision.noSpace, true);
+    assert.strictEqual(decision.joiner, '');
+    assert.ok(decision.reason.includes('French elision'));
+    assert.notStrictEqual(decision.surfacePrev, testCase.prev); // Should be elided
+  }
+
+  // Test that underscore format also works (fr_FR -> fr-FR)
+  const decision = await morph.join('le', 'ami', 'fr_FR');
+  assert.strictEqual(decision.noSpace, true);
+  assert.strictEqual(decision.joiner, '');
+  assert.ok(decision.reason.includes('French elision'));
+});
