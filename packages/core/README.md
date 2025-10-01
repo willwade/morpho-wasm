@@ -47,6 +47,97 @@ const decision = await morph.join('je', 'aime', 'fr-FR');
 // Returns: { surfacePrev: "j'", surfaceNext: 'aime', joiner: '', noSpace: true, ... }
 ```
 
+## Morphological Generation
+
+The `morph.generate()` API creates different word forms from a base lemma by applying morphological tags.
+
+### English Examples
+
+```typescript
+await morph.load('en-US');
+
+// Plural nouns
+await morph.generate({ lemma: 'cat', tags: ['n', 'pl'] }, 'en-US');
+// → ['cats']
+
+// Verb conjugation
+await morph.generate({ lemma: 'run', tags: ['vblex', 'pres', 'p3', 'sg'] }, 'en-US');
+// → ['runs']
+
+await morph.generate({ lemma: 'walk', tags: ['vblex', 'past'] }, 'en-US');
+// → ['walked']
+
+await morph.generate({ lemma: 'walk', tags: ['vblex', 'pprs'] }, 'en-US');
+// → ['walking']
+
+// Adjective comparison
+await morph.generate({ lemma: 'big', tags: ['adj', 'sint', 'comp'] }, 'en-US');
+// → ['bigger']
+
+await morph.generate({ lemma: 'big', tags: ['adj', 'sint', 'sup'] }, 'en-US');
+// → ['biggest']
+
+// Irregular forms work automatically
+await morph.generate({ lemma: 'go', tags: ['vblex', 'past'] }, 'en-US');
+// → ['went']
+
+await morph.generate({ lemma: 'mouse', tags: ['n', 'pl'] }, 'en-US');
+// → ['mice']
+```
+
+### Reverse Operation: Analysis
+
+```typescript
+// Analyze surface forms to discover lemmas and tags
+const analyses = await morph.analyse('cats', 'en-US');
+// → [{ lemma: 'cat', tags: ['n', 'pl'], surface: 'cats' }]
+
+const analyses = await morph.analyse('bigger', 'en-US');
+// → [{ lemma: 'big', tags: ['adj', 'sint', 'comp'], surface: 'bigger' }]
+
+const analyses = await morph.analyse('went', 'en-US');
+// → [{ lemma: 'go', tags: ['vblex', 'past'], surface: 'went' }]
+```
+
+### Multilingual Examples
+
+```typescript
+// French: Gender and number agreement
+await morph.generate({ lemma: 'cheval', tags: ['n', 'm', 'pl'] }, 'fr-FR');
+// → ['chevaux']
+
+await morph.generate({ lemma: 'aimer', tags: ['vblex', 'pri', 'p1', 'sg'] }, 'fr-FR');
+// → ['aime']
+
+// Spanish: Verb conjugation
+await morph.generate({ lemma: 'hablar', tags: ['vblex', 'ger'] }, 'es-ES');
+// → ['hablando']
+
+await morph.generate({ lemma: 'casa', tags: ['n', 'f', 'pl'] }, 'es-ES');
+// → ['casas']
+
+// German: Case declensions
+await morph.generate({ lemma: 'Haus', tags: ['n', 'nt', 'pl', 'nom'] }, 'de-DE');
+// → ['Häuser']
+```
+
+### Discovering Available Tags
+
+The best way to discover tags is to analyze example words:
+
+```typescript
+// Want to know the tags for past tense? Analyze a past tense verb:
+const analyses = await morph.analyse('walked', 'en-US');
+console.log(analyses[0].tags);  // ['vblex', 'past']
+
+// Now use those tags for generation:
+await morph.generate({ lemma: 'run', tags: ['vblex', 'past'] }, 'en-US');
+// → ['ran']
+```
+
+**📚 For comprehensive documentation, tag reference tables, and advanced examples, see:**
+**[Morphological Generation Guide](../../docs/MORPHOLOGICAL_GENERATION.md)**
+
 ## API Reference
 
 ### Configuration
@@ -73,6 +164,23 @@ Analyzes a surface form into morphological components.
 
 #### `morph.generate(input: MorphInput, lang: string): Promise<string[]>`
 Generates surface forms from morphological specification.
+
+**Example:**
+```typescript
+// Generate plural noun
+await morph.generate({ lemma: 'cat', tags: ['n', 'pl'] }, 'en-US');
+// → ['cats']
+
+// Generate past tense verb
+await morph.generate({ lemma: 'walk', tags: ['vblex', 'past'] }, 'en-US');
+// → ['walked']
+
+// Generate comparative adjective
+await morph.generate({ lemma: 'big', tags: ['adj', 'sint', 'comp'] }, 'en-US');
+// → ['bigger']
+```
+
+**See [Morphological Generation Guide](../../docs/MORPHOLOGICAL_GENERATION.md) for comprehensive examples and tag reference.**
 
 #### `morph.join(prev: string, next: string, lang: string): Promise<JoinDecision>`
 Determines how two tokens should be joined using morphological analysis.

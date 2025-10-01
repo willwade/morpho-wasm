@@ -4,6 +4,12 @@ This folder contains developer guides for:
 - Integrators embedding the API (morph.load/analyse/generate/join)
 - Contributors working on core/joiner/worker and language packs
 
+## Documentation Index
+
+- **[Morphological Generation Guide](MORPHOLOGICAL_GENERATION.md)** - Comprehensive guide to word form generation and analysis with examples for all 13 languages
+- **[Tag Quick Reference](TAG_REFERENCE.md)** - Quick lookup tables for common morphological tags by language
+- **[API Overview](#1-public-api-core)** - Core API reference (below)
+
 See also: tests/test.tsv for join gold cases.
 
 ## 1. Public API (core)

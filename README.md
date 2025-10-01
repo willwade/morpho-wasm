@@ -4,7 +4,10 @@ WebAssembly runtime and API for HFST/GiellaLT morphology in web apps, with a sim
 
 **✨ Now supporting 13 languages with full HFST morphological analysis including weighted transducers!**
 
-See docs/README.md for the developer guide and roadmap highlights.
+## Documentation
+
+- **[Developer Guide](docs/README.md)** - API overview and integration guide
+- **[Morphological Generation Guide](docs/MORPHOLOGICAL_GENERATION.md)** - Comprehensive guide to word form generation and analysis with examples for all languages
 
 ## Packages
 - packages/core – WASM loader + Web Worker + public API (ESM)
