@@ -263,8 +263,10 @@ const hfstRuntimeStub: Morph = {
   async load(lang) {
     // Init Worker (no-op in Node). urls are configurable.
     await hfstClient.init(hfstWasmUrl, hfstPackUrl);
-    // Load pack from explicit configuration or manifest
-    // Load pack only if explicitly provided via configuration; CDN manifest is used by the demo
+
+    // Load pack from explicit configuration or CDN manifest
+    // Note: This is a browser-first WASM library. For server-side usage,
+    // configure packUrl explicitly or use Bun which has better WASM support.
     if (hfstPackUrl) {
       await hfstClient.loadPack(hfstPackUrl);
     }

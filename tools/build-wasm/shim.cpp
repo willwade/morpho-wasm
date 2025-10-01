@@ -30,10 +30,34 @@ int loadGenerator(const char* path) {
 
 // Apply analysis (UP). If out==nullptr or out_cap==0, returns required bytes.
 int applyUp(const char* input, char* out, int out_cap) {
-  if (!g_transducer) return -2;
+  if (!g_transducer) {
+    std::string err = "ERROR:NO_TRANSDUCER";
+    int needed = static_cast<int>(err.size());
+    if (out && out_cap > 0) {
+      int n = needed < out_cap ? needed : out_cap - 1;
+      std::memcpy(out, err.data(), n);
+      out[n] = '\0';
+    }
+    return needed;
+  }
   try {
-    std::string in("^"); in += input; in += "$";
+    // Don't add ^ and $ markers - they're Apertium-specific and break UralicNLP/GiellaLT transducers
+    std::string in(input);
     std::vector<std::vector<std::string>> results = g_transducer->lookup(in.c_str());
+
+    // Debug: If no results, try to understand why
+    if (results.empty()) {
+      // Return a debug message instead of empty
+      std::string debug = "DEBUG:NO_RESULTS:";
+      debug += input;
+      int needed = static_cast<int>(debug.size());
+      if (out == nullptr || out_cap <= 0) return needed;
+      int n = needed < out_cap ? needed : out_cap - 1;
+      std::memcpy(out, debug.data(), n);
+      out[n] = '\0';
+      return n;
+    }
+
     std::ostringstream oss;
     for (size_t i = 0; i < results.size(); ++i) {
       for (size_t j = 0; j < results[i].size(); ++j) {
@@ -49,14 +73,34 @@ int applyUp(const char* input, char* out, int out_cap) {
     std::memcpy(out, s.data(), n);
     out[n] = '\0';
     return n;
-  } catch (...) { return -3; }
+  } catch (const std::exception& e) {
+    std::string err = "ERROR:EXCEPTION:";
+    err += e.what();
+    int needed = static_cast<int>(err.size());
+    if (out && out_cap > 0) {
+      int n = needed < out_cap ? needed : out_cap - 1;
+      std::memcpy(out, err.data(), n);
+      out[n] = '\0';
+    }
+    return needed;
+  } catch (...) {
+    std::string err = "ERROR:UNKNOWN_EXCEPTION";
+    int needed = static_cast<int>(err.size());
+    if (out && out_cap > 0) {
+      int n = needed < out_cap ? needed : out_cap - 1;
+      std::memcpy(out, err.data(), n);
+      out[n] = '\0';
+    }
+    return needed;
+  }
 }
 
 // Apply generation (DOWN). Uses generator transducer if loaded; falls back to analysis.
 int applyDown(const char* input, char* out, int out_cap) {
   if (g_generator) {
     try {
-      std::string in("^"); in += input; in += "$";
+      // Don't add ^ and $ markers - they're Apertium-specific and break UralicNLP/GiellaLT transducers
+      std::string in(input);
       std::vector<std::vector<std::string>> results = g_generator->lookup(in.c_str());
       std::ostringstream oss;
       for (size_t i = 0; i < results.size(); ++i) {

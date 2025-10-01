@@ -1,18 +1,23 @@
 # @morphgrid/core
 
-WebAssembly runtime and API for HFST/GiellaLT morphology with FST-based token joining.
+**Browser-first** WebAssembly runtime and API for HFST/GiellaLT morphology with FST-based token joining.
 
 ## Overview
 
 The core package provides a complete morphological analysis and generation system with intelligent token joining capabilities. It uses HFST (Helsinki Finite-State Technology) compiled to WebAssembly for high-performance morphological processing.
 
+**Primary Environment**: Modern web browsers
+**CLI/Testing**: Use [Bun](https://bun.sh/) for excellent WASM support
+**Production Servers**: Use [UralicNLP](https://github.com/mikahama/uralicNLP) or [HFST CLI tools](https://hfst.github.io/)
+
 ## Key Features
 
 - **HFST WASM Runtime**: High-performance morphological analysis and generation
-- **Web Worker Architecture**: Non-blocking processing in browsers and Node.js
+- **Web Worker Architecture**: Non-blocking processing in browsers
 - **FST-based Joins**: Intelligent token combination using morphological analysis
 - **Language Pack System**: Lazy-loaded transducers with integrity verification
 - **Comprehensive API**: Simple interface for complex morphological operations
+- **Full Irregular Forms**: Proper handling of irregular verbs and nouns via HFST transducers
 
 ## Quick Start
 

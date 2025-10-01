@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test All Languages - morpho-wasm</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+    h1 { color: #333; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    .test-section h2 { margin-top: 0; color: #0066cc; }
+    .result { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 3px; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .loading { color: #856404; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Test All Languages - morpho-wasm</h1>
+  <button onclick="testAllLanguages()">Test All Languages</button>
+  <div id="results"></div>
+
+  <script type="module">
+    import { morph, configureMorphRuntime, configureMorphHfst } from '../../core/dist/index.js';
+
+    // Configure to use HFST
+    configureMorphRuntime('hfst');
+    configureMorphHfst({ wasmUrl: '../../core/public/wasm/hfst.wasm' });
+
+    const testWords = {
+      'ca-ES': ['cases', 'parlant'],  // Catalan
+      'da-DK': ['huse', 'løber'],     // Danish
+      'de-DE': ['Häuser', 'laufen'],  // German
+      'en-US': ['houses', 'running'], // English
+      'es-ES': ['casas', 'hablando'], // Spanish
+      'et-EE': ['majad', 'jookseb'],  // Estonian
+      'eu-ES': ['etxeak', 'korrika'],  // Basque
+      'fi-FI': ['talot', 'juoksee'],  // Finnish
+      'fr-FR': ['maisons', 'courant'], // French
+      'it-IT': ['case', 'correndo'],  // Italian
+      'no-NO': ['hus', 'løper'],      // Norwegian
+      'ru-RU': ['дома', 'бегу'],      // Russian
+      'sv-SE': ['hus', 'springer'],   // Swedish
+    };
+
+    window.testAllLanguages = async function() {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '<div class="loading">Testing all languages...</div>';
+      
+      const results = [];
+      
+      for (const [lang, words] of Object.entries(testWords)) {
+        const section = document.createElement('div');
+        section.className = 'test-section';
+        section.innerHTML = `<h2>${lang}</h2><div class="loading">Loading...</div>`;
+        resultsDiv.appendChild(section);
+        
+        try {
+          console.log(`\n=== Testing ${lang} ===`);
+
+          await morph.load(lang);
+          console.log('Loaded successfully');
+
+          const testResults = [];
+          for (const word of words) {
+            const result = await morph.analyse(word, lang);
+            console.log(`${word} →`, result);
+            testResults.push(`<div class="result">${word} → ${result.length} analyses</div>`);
+          }
+          
+          section.innerHTML = `
+            <h2>✅ ${lang}</h2>
+            ${testResults.join('')}
+          `;
+          section.className = 'test-section success';
+          
+        } catch (error) {
+          console.error(`Error testing ${lang}:`, error);
+          section.innerHTML = `
+            <h2>❌ ${lang}</h2>
+            <div class="result error">Error: ${error.message}</div>
+          `;
+          section.className = 'test-section error';
+        }
+      }
+      
+      console.log('\n=== All tests complete ===');
+    };
+  </script>
+</body>
+</html>
+

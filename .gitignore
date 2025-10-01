@@ -151,3 +151,19 @@ packages/*/build
 *.final
 *.inverted
 *.tropical
+
+# Temporary test files
+test-*.hfstol
+test-*.pmhfst
+test-*.att
+test-output.txt
+tmp.patch
+*.tmp
+
+# Temporary shell scripts (keep only committed ones)
+check-*.sh
+convert-*.sh
+download-*.sh
+fetch-*.sh
+optimize-*.sh
+test-*.sh

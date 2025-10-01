@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Morphgrid HFST Demo (Local Build)</title>
+</head>
+<body>
+  <h1>Morphgrid HFST Demo (Local Build)</h1>
+  <p style="background: #ffffcc; padding: 8px; border: 1px solid #cc9900;">
+    <strong>Note:</strong> This demo uses the local build from <code>packages/core/dist/</code>
+  </p>
+  <p>
+    <label>Language:
+      <select id="lang" onchange="updatePackUrl()">
+        <option value="fr-FR" selected>fr-FR (French)</option>
+        <option value="de-DE">de-DE (German)</option>
+        <option value="es-ES">es-ES (Spanish)</option>
+        <option value="fi-FI">fi-FI (Finnish)</option>
+        <option value="it-IT">it-IT (Italian)</option>
+        <option value="ru-RU">ru-RU (Russian)</option>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label><input type="checkbox" id="showRaw"> Inspect raw HFST output</label>
+  </p>
+  <p>
+    <label>Pack URL: <input id="packUrl" value="http://localhost:8080/packages/packs/fr-FR/v1/analysis.hfstol?v=5&gen=http://localhost:8080/packages/packs/fr-FR/v1/generate.hfstol?v=5" size="80"></label>
+    <button id="loadPack">Load Pack</button>
+  </p>
+  <p>
+    <label>Analyse Input: <input id="input" value="maison"></label>
+    <button id="run">Analyse</button>
+    <span id="busy" style="margin-left:8px;display:none;">⏳ Working…</span>
+  </p>
+  <p>
+    <label>Generate Lemma: <input id="genLemma" value="aimer"></label>
+    <label style="margin-left:12px;">Tags: <input id="genTags" value="vblex,past" size="20"></label>
+    <button id="runGen">Generate</button>
+  </p>
+  <details open>
+    <summary>Test Cases - German</summary>
+    <p><strong>Nouns:</strong></p>
+    <ul>
+      <li><button onclick="testWord('Haus')">Haus (house)</button></li>
+      <li><button onclick="testWord('Häuser')">Häuser (houses)</button></li>
+      <li><button onclick="testWord('Katze')">Katze (cat)</button></li>
+      <li><button onclick="testWord('Katzen')">Katzen (cats)</button></li>
+    </ul>
+    <p><strong>Verbs:</strong></p>
+    <ul>
+      <li><button onclick="testWord('gehen')">gehen (to go)</button></li>
+      <li><button onclick="testWord('ging')">ging (went)</button></li>
+      <li><button onclick="testWord('sprechen')">sprechen (to speak)</button></li>
+      <li><button onclick="testWord('sprach')">sprach (spoke)</button></li>
+    </ul>
+    <p><strong>Irregular Plurals:</strong></p>
+    <ul>
+      <li><button onclick="testWord('chevaux')">chevaux (horses)</button></li>
+      <li><button onclick="testWord('yeux')">yeux (eyes)</button></li>
+    </ul>
+  </details>
+
+  <h3>Output</h3>
+  <pre id="log" style="background:#111;color:#0f0;padding:8px;min-height:3em;"></pre>
+  <pre id="out"></pre>
+
+  <script type="module">
+    // Use local build instead of CDN
+    import { morph, configureMorphRuntime, configureMorphHfst, lastHfstUpRaw, lastHfstDownRaw } from '../../core/dist/index.js?v=6';
+
+    configureMorphRuntime('hfst');
+    configureMorphHfst({
+      wasmUrl: 'http://localhost:8080/packages/core/public/wasm/hfst.wasm?v=7',
+      packUrl: 'http://localhost:8080/packages/packs/de-DE/v1/analysis.hfstol?v=7&gen=http://localhost:8080/packages/packs/de-DE/v1/generate.hfstol?v=7'
+    });
+
+    // Update pack URL when language changes
+    window.updatePackUrl = function() {
+      const lang = document.getElementById('lang').value;
+      const baseUrl = 'http://localhost:8080/packages/packs';
+      const packUrl = `${baseUrl}/${lang}/v1/analysis.hfstol?v=6&gen=${baseUrl}/${lang}/v1/generate.hfstol?v=6`;
+      document.getElementById('packUrl').value = packUrl;
+    };
+
+    const log = document.getElementById('log');
+    const busy = document.getElementById('busy');
+    const input = document.getElementById('input');
+    const output = document.getElementById('out');
+    const showRawCheckbox = document.getElementById('showRaw');
+    
+    function logLine(msg) { 
+      log.textContent += (msg + "\n"); 
+      log.scrollTop = log.scrollHeight;
+    }
+
+    logLine('Initializing HFST runtime...');
+    const langSel = document.getElementById('lang');
+    await morph.load(langSel.value);
+    logLine('HFST runtime ready.');
+
+    // Load the pack
+    const packInput = document.getElementById('packUrl');
+    document.getElementById('loadPack').addEventListener('click', async () => {
+      try {
+        busy.style.display = 'inline';
+        logLine(`Loading pack: ${packInput.value}`);
+        configureMorphHfst({ packUrl: packInput.value });
+        await morph.load(langSel.value);
+        logLine('Pack loaded (or using manifest).');
+      } catch (e) {
+        logLine('Pack load error: ' + (e?.message || e));
+      } finally {
+        busy.style.display = 'none';
+      }
+    });
+
+    // Auto-load on startup
+    logLine(`Loading pack: ${packInput.value}`);
+    await morph.load(langSel.value);
+    logLine('Pack loaded.');
+
+    // Analysis
+    document.getElementById('run').addEventListener('click', async () => {
+      const word = input.value.trim();
+      if (!word) return;
+
+      try {
+        busy.style.display = 'inline';
+        logLine(`applyUp('${word}') ...`);
+
+        const results = await morph.analyse(word, langSel.value);
+        logLine(`applyUp OK, ${results.length} result(s).`);
+
+        if (showRawCheckbox.checked) {
+          output.textContent = JSON.stringify(lastHfstUpRaw, null, 2);
+        } else {
+          output.textContent = JSON.stringify(results, null, 2);
+        }
+      } catch (e) {
+        logLine('Analysis error: ' + (e?.message || e));
+        output.textContent = 'Error: ' + (e?.message || e);
+      } finally {
+        busy.style.display = 'none';
+      }
+    });
+
+    // Generation
+    document.getElementById('runGen').addEventListener('click', async () => {
+      const lemma = document.getElementById('genLemma').value.trim();
+      const tagsStr = document.getElementById('genTags').value.trim();
+      const tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
+      
+      if (!lemma) return;
+      
+      try {
+        busy.style.display = 'inline';
+        logLine(`applyDown('${lemma}', [${tags.join(', ')}]) ...`);
+        
+        const results = await morph.generate(lemma, tags, langSel.value);
+        logLine(`applyDown OK, ${results.length} result(s).`);
+
+        if (showRawCheckbox.checked) {
+          output.textContent = JSON.stringify(lastHfstDownRaw, null, 2);
+        } else {
+          output.textContent = JSON.stringify(results, null, 2);
+        }
+      } catch (e) {
+        logLine('Generation error: ' + (e?.message || e));
+        output.textContent = 'Error: ' + (e?.message || e);
+      } finally {
+        busy.style.display = 'none';
+      }
+    });
+
+    // Test helper
+    window.testWord = async (word) => {
+      input.value = word;
+      document.getElementById('run').click();
+    };
+
+    // Enter key support
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('run').click();
+    });
+  </script>
+</body>
+</html>
+

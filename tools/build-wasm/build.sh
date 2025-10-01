@@ -1,15 +1,17 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+set -e
 
 # HFST WASM build using Emscripten
 # Prereq: source the Emscripten env (e.g., source ~/emsdk/emsdk_env.sh)
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
-OUT_DIR="$ROOT_DIR/packages/core/public/wasm"
+OUT_DIR="/tmp/hfst-wasm-build"
+FINAL_DIR="$ROOT_DIR/packages/core/public/wasm"
 SRC_DIR="$ROOT_DIR/third_party/hfst-optimized-lookup"
 SHIM="$ROOT_DIR/tools/build-wasm/shim.cpp"
 
 mkdir -p "$OUT_DIR"
+mkdir -p "$FINAL_DIR"
 
 # Build
 emcc \
@@ -22,4 +24,10 @@ emcc \
   -o "$OUT_DIR/hfst.js"
 
 echo "Built wasm + loader at: $OUT_DIR/hfst.js (+ hfst.wasm)"
+
+# Copy to final location
+cp "$OUT_DIR/hfst.js" "$FINAL_DIR/hfst.js"
+cp "$OUT_DIR/hfst.wasm" "$FINAL_DIR/hfst.wasm"
+
+echo "Copied to: $FINAL_DIR/"
 

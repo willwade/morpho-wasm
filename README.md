@@ -1,6 +1,10 @@
 # morphgrid-wasm
 
-WebAssembly runtime and API for HFST/GiellaLT morphology in web apps, with a simple, framework‑agnostic interface and a static demo. See docs/README.md for the developer guide and roadmap highlights.
+WebAssembly runtime and API for HFST/GiellaLT morphology in web apps, with a simple, framework‑agnostic interface and static demos.
+
+**✨ Now supporting 12 languages with full HFST morphological analysis including weighted transducers!**
+
+See docs/README.md for the developer guide and roadmap highlights.
 
 ## Packages
 - packages/core – WASM loader + Web Worker + public API (ESM)
@@ -8,10 +12,12 @@ WebAssembly runtime and API for HFST/GiellaLT morphology in web apps, with a sim
 - packages/demo – static demo pages (no framework)
 
 ## Key features
-- HFST optimized lookup compiled to WASM (hfst.wasm) with a Worker wrapper
+- **HFST optimized lookup compiled to WASM** (hfst.wasm) with Web Worker wrapper
+- **Weighted transducer support** for advanced morphological analysis
+- **13 languages supported**: English, French, Spanish, Italian, German, Finnish, Estonian, Basque, Norwegian, Russian, Swedish, Catalan, Danish
 - Lazy‑loaded language packs with SHA‑256 integrity; Cache Storage caching
 - Minimal public API: load, analyse, generate, join
-- **FST-based joins using existing GiellaLT/Apertium morphological transducers**
+- **FST-based joins** using existing GiellaLT/Apertium morphological transducers
 - Language-specific join logic: French elision, Spanish clitics, German compounds
 - Intelligent fallback system when FST analysis is unavailable
 - Grid‑set tag ordering control (strict vs flexible) for generation
@@ -68,11 +74,26 @@ The join system uses existing GiellaLT/Apertium morphological transducers to mak
 3. **Language-specific Logic**: Implements rules for each language based on linguistic patterns
 4. **Intelligent Fallback**: Falls back to language-specific rules when FST analysis is unavailable
 
-### Supported Languages
-- **French**: Elision rules (`je + aime → j'aime`, `le + homme → l'homme`)
-- **Spanish**: Clitic attachment (`dar + me → darme`) and contractions (`de + el → del`)
-- **German**: Compound formation (`Haus + Tür → Haustür`)
-- **Other languages**: Default spacing with potential for future expansion
+### Supported Languages (13 total)
+
+#### With Full HFST Morphological Analysis:
+1. 🇬🇧 **English** (en-US) - Converted from Apertium English
+2. 🇫🇷 **French** (fr-FR) - Elision rules (`je + aime → j'aime`, `le + homme → l'homme`)
+3. 🇪🇸 **Spanish** (es-ES) - Clitic attachment (`dar + me → darme`) and contractions (`de + el → del`)
+4. 🇩🇪 **German** (de-DE) - Compound formation (`Haus + Tür → Haustür`)
+5. 🇮🇹 **Italian** (it-IT)
+6. 🇫🇮 **Finnish** (fi-FI)
+7. 🇪🇪 **Estonian** (et-EE)
+8. 🇪🇸 **Basque** (eu-ES)
+9. 🇳🇴 **Norwegian** (no-NO)
+10. 🇷🇺 **Russian** (ru-RU)
+11. 🇸🇪 **Swedish** (sv-SE)
+12. 🇪🇸 **Catalan** (ca-ES)
+13. 🇩🇰 **Danish** (da-DK)
+
+All languages use HFST weighted transducers for accurate morphological analysis.
+
+**Note**: English transducer is converted from Apertium lttoolbox format. Command-line testing shows perfect morphological analysis (irregular verbs, plurals, etc.), but WASM integration is still being debugged.
 
 ### Benefits
 - **No custom rule files**: Uses existing, well-tested morphological transducers
@@ -81,9 +102,33 @@ The join system uses existing GiellaLT/Apertium morphological transducers to mak
 - **Robust**: Graceful fallback when FST analysis is unavailable
 
 ## Tests
-- Node tests: npm -w packages/core test
-  - TSV gold tests for joins (tests/test.tsv)
-  - Sample stemming/generation tests
+
+### Running Tests:
+```bash
+# Build and run all tests
+npm test
+
+# Run specific package tests
+npm -w packages/core test
+```
+
+### Test Types:
+- **TSV gold tests** for joins (tests/test.tsv)
+- **Morphology tests** for stemming/generation
+- **HFST integration tests** (require Bun runtime)
+
+### Important Note on HFST Tests:
+HFST WASM tests **do not work in Node.js** due to WASM limitations. Use **Bun** for HFST testing:
+
+```bash
+# Install Bun (if not already installed)
+curl -fsSL https://bun.sh/install | bash
+
+# Run HFST tests with Bun
+bun packages/core/test/bun-hfst-test.js
+```
+
+Browser-based HFST tests work perfectly - see the demos!
 
 ## Asterics Grid notes
 - Tag ordering control (grid‑set level): configureTagOrdering('strict'|'flexible')

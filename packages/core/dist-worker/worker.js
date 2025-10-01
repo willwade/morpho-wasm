@@ -636,6 +636,7 @@ async function initWasm(wasmUrl, _packUrl) {
         console.log(`🔧 Reading WASM file: ${wasmPath}`);
         const wasmBuffer = fs.readFileSync(wasmPath);
         console.log(`🔧 WASM file loaded: ${wasmBuffer.length} bytes`);
+        console.log('🔧 Calling ModuleFactory...');
         Module = await ModuleFactory({
             wasmBinary: wasmBuffer,
             locateFile: (p) => {
@@ -644,9 +645,11 @@ async function initWasm(wasmUrl, _packUrl) {
                 return p;
             }
         });
+        console.log('🔧 ModuleFactory completed, Module:', Module ? 'created' : 'NULL');
     }
     else {
         // Browser environment - use standard locateFile approach
+        console.log('🔧 Calling ModuleFactory (browser)...');
         Module = await ModuleFactory({
             locateFile: (p) => {
                 if (p.endsWith('.wasm')) {
@@ -655,7 +658,9 @@ async function initWasm(wasmUrl, _packUrl) {
                 return p;
             }
         });
+        console.log('🔧 ModuleFactory completed (browser), Module:', Module ? 'created' : 'NULL');
     }
+    console.log('🔧 initWasm function completed');
     // Pack loading is now handled separately in the 'load_pack' message handler
     // This function only initializes the WASM module
 }
@@ -667,6 +672,8 @@ async function handleMessage(msg) {
             case 'init': {
                 wasmUrlCache = msg.wasmUrl;
                 await initWasm(msg.wasmUrl, msg.packUrl);
+                console.log('🔧 initWasm completed, Module:', Module ? 'initialized' : 'NULL');
+                console.log('🔧 Module.FS:', Module?.FS ? 'available' : 'NOT available');
                 ready = true;
                 postMessage({ type: 'ready' });
                 break;
@@ -924,8 +931,12 @@ async function handleMessage(msg) {
                                                 console.log('🔧 Generator decompressed:', genBuffer.length, '→', finalGenBuf.length, 'bytes');
                                             }
                                             else {
-                                                // Browser decompression would go here if needed
-                                                console.log('🔧 Browser GZIP decompression not implemented');
+                                                // Browser: use DecompressionStream API
+                                                const blob = new Blob([genBuffer.slice(0)]);
+                                                const stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
+                                                const decompressed = await new Response(stream).arrayBuffer();
+                                                finalGenBuf = new Uint8Array(decompressed);
+                                                console.log('🔧 Generator decompressed:', genBuffer.length, '→', finalGenBuf.length, 'bytes');
                                             }
                                         }
                                         catch (error) {
@@ -961,31 +972,45 @@ async function handleMessage(msg) {
             }
             case 'apply_up': {
                 // Reduced logging to avoid serialization issues
+                console.log('🔧 apply_up called with input:', msg.input);
+                console.log('🔧 ready:', ready, 'transducerLoaded:', transducerLoaded);
                 const outputs = (ready && transducerLoaded) ? (() => {
                     // Simplified apply_up logic
                     if (Module?.cwrap) {
                         try {
                             const fn = Module.cwrap('applyUp', 'number', ['string', 'number', 'number']);
-                            if (!fn)
+                            if (!fn) {
+                                console.log('🔧 applyUp function not found');
                                 return [`HFST_WASM_NOT_LOADED:${msg.input}`];
+                            }
                             // two-call pattern: first to get size, then allocate buffer
+                            console.log('🔧 Calling applyUp to get size...');
                             const needed = fn(msg.input, 0, 0);
-                            if (needed <= 0)
+                            console.log('🔧 applyUp returned size:', needed);
+                            if (needed <= 0) {
+                                console.log('🔧 No results found (size <= 0)');
                                 return []; // No analysis found
+                            }
                             const outPtr = Module._malloc(needed + 1);
                             fn(msg.input, outPtr, needed + 1);
                             const s = Module.UTF8ToString(outPtr);
+                            console.log('🔧 applyUp result string:', s);
                             Module._free(outPtr);
-                            return s ? s.split('\n').filter(Boolean) : [];
+                            const results = s ? s.split('\n').filter(Boolean) : [];
+                            console.log('🔧 Parsed results:', results);
+                            return results;
                         }
-                        catch {
+                        catch (e) {
+                            console.log('🔧 applyUp error:', e);
                             return [`HFST_WASM_ERROR:${msg.input}`];
                         }
                     }
                     else {
+                        console.log('🔧 Module.cwrap not available');
                         return [`HFST_WASM_NOT_LOADED:${msg.input}`];
                     }
                 })() : transducerLoaded ? [`HFST_WASM_NOT_LOADED:${msg.input}`] : [`HFST_TRANSDUCER_NOT_LOADED:${msg.input}`];
+                console.log('🔧 Final outputs:', outputs);
                 postMessage({ type: 'up', outputs });
                 break;
             }
