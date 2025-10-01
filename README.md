@@ -2,7 +2,7 @@
 
 WebAssembly runtime and API for HFST/GiellaLT morphology in web apps, with a simple, framework‑agnostic interface and static demos.
 
-**✨ Now supporting 12 languages with full HFST morphological analysis including weighted transducers!**
+**✨ Now supporting 13 languages with full HFST morphological analysis including weighted transducers!**
 
 See docs/README.md for the developer guide and roadmap highlights.
 
@@ -93,7 +93,7 @@ The join system uses existing GiellaLT/Apertium morphological transducers to mak
 
 All languages use HFST weighted transducers for accurate morphological analysis.
 
-**Note**: English transducer is converted from Apertium lttoolbox format. Command-line testing shows perfect morphological analysis (irregular verbs, plurals, etc.), but WASM integration is still being debugged.
+**Note**: English transducer is converted from Apertium lttoolbox format and works perfectly in WASM! Handles irregular verbs (went→go), irregular plurals (mice→mouse, children→child), and complex morphology.
 
 ### Benefits
 - **No custom rule files**: Uses existing, well-tested morphological transducers
